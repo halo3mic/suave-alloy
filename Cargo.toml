@@ -1,0 +1,35 @@
+[package]
+name = "ccr-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features = [
+    "contract",
+    "network",
+    "node-bindings",
+    "providers",
+    "provider-http",
+    "provider-ipc",
+    "provider-ws",
+    "rpc-client",
+    "rpc-client-ipc",
+    "rpc-client-ws",
+    "rpc-types-eth",
+    "rpc-types-trace",
+    "signers",
+    "signer-keystore",
+    "signer-ledger",
+    "signer-mnemonic",
+    "signer-trezor",
+    "signer-wallet",
+    "signer-yubihsm",
+    "consensus",
+    "eips"
+] }
+alloy-rlp = { version = "0.3.4", features = ["derive"] }
+async-trait = "0.1.79"
+eyre = "0.6.12"
+serde = { version = "1.0.197", features = ["serde_derive", "derive"] }
+tokio = { version = "1.37.0", features = ["full"] }
+url = "2.5.0"
