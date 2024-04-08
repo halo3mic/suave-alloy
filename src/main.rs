@@ -2,5 +2,5 @@ mod ccr;
 
 
 fn main() {
-    println!("Hello, world!");
+    // todo: send ccr from cli
 }

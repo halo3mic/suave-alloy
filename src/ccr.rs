@@ -1,3 +1,5 @@
+// todo: split into files
+
 use alloy::{
     primitives::{self, Address, Bytes, FixedBytes, U256, ChainId, Signature, TxKind}, 
     rpc::types::eth::TransactionRequest,
@@ -260,7 +262,7 @@ use alloy::network::{TxSigner, NetworkSigner, Network, TransactionBuilder, Build
 use alloy::providers::ProviderBuilder;
 use alloy::signers::Result as SignerResult;
 use alloy::consensus::{TxEnvelope, self};
-use alloy::rpc::types::eth::{TransactionReceipt, Header as EthHeader};
+use alloy::rpc::types::eth::{TransactionReceipt, Header as EthHeader, Transaction as TransactionResponse};
 use alloy::eips::eip2718::{Decodable2718, Encodable2718};
 use async_trait::async_trait;
 
@@ -397,17 +399,19 @@ impl Network for SuaveNetwork {
     type ReceiptEnvelope = TxEnvelope;
     type Header = consensus::Header;
     type TransactionRequest = ConfidentialComputeRequest;
-    type TransactionResponse = (); //todo: speical type for this
+    type TransactionResponse = TransactionResponse; //todo: speical type for this
     type ReceiptResponse = TransactionReceipt;
     type HeaderResponse = EthHeader;
 }
 
 impl Decodable2718 for ConfidentialComputeRequest {
     fn typed_decode(ty: u8, buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
+        println!("Decoding: {:?}", ty);
         todo!()
     }
 
     fn fallback_decode(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
+        println!("Decoding(fallback): {:?}", buf);
         todo!()
     }
 }
@@ -422,6 +426,7 @@ impl Encodable2718 for ConfidentialComputeRequest {
     }
 
     fn encode_2718(&self, out: &mut dyn alloy_rlp::BufMut) {
+        out.put_u8(CCTypes::ConfidentialComputeRequest as u8);
         CcRequestRlp::from(self).encode(out);
     }
 }
@@ -492,11 +497,10 @@ mod tests {
     use super::*;
     use alloy::{
         network::{
-            EthereumSigner, 
             TransactionBuilder, 
             TxSigner
-        },
-        node_bindings::Anvil, 
+        }, 
+        primitives::B256, 
         providers::{Provider, ProviderBuilder}, 
         rpc::types::eth::TransactionRequest, 
         signers::wallet::LocalWallet
@@ -590,17 +594,23 @@ mod tests {
         assert_eq!(sig.s(), U256::from_str("0x2dce69262794a499d525c5d58edde33e06a5847b4d321d396b743700a2fd71a8").unwrap());
     }
 
+
+    // todo: do a proper test
     #[tokio::test]
     async fn test_send_tx_rigil() {
+        let rpc_url = url::Url::parse("https://rpc.rigil.suave.flashbots.net").unwrap();
+        let provider = ProviderBuilder::new().on_reqwest_http(rpc_url.clone()).unwrap();
+        let wallet_address = Address::from_str("0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A").unwrap();
+        let tx_count: u64 = provider.get_transaction_count(wallet_address, None).await.unwrap().to();
         // Create a cc request 
-        let cinputs = Bytes::from_str("0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001ea7b22747873223a5b7b2274797065223a22307830222c226e6f6e6365223a22307830222c22746f223a22307863613135656439393030366236623130363038653236313631373361313561343766383933613661222c22676173223a22307835323038222c226761735072696365223a22307864222c226d61785072696f72697479466565506572476173223a6e756c6c2c226d6178466565506572476173223a6e756c6c2c2276616c7565223a223078336538222c22696e707574223a223078222c2276223a2230786366323838222c2272223a22307863313764616536383866396262393632376563636439626636393133626661346539643232383139353134626539323066343435653263666165343366323965222c2273223a22307835633337646235386263376161336465306535656638613432353261366632653464313462613639666338323631636333623630633962643236613634626265222c2268617368223a22307862643263653662653964333461366132393934373239346662656137643461343834646663363565643963383931396533626539366131353634363630656265227d5d2c2270657263656e74223a31302c224d617463684964223a5b302c302c302c302c302c302c302c302c302c302c302c302c302c302c302c305d7d00000000000000000000000000000000000000000000").unwrap();
-        let execution_node = Address::from_str("0x7d83e42b214b75bf1f3e57adc3415da573d97bff").unwrap();
-        let nonce = 0x22;
-        let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
+        let cinputs = Bytes::from_str("0x00").unwrap();
+        let execution_node = Address::from_str("0x03493869959c866713c33669ca118e774a30a0e5").unwrap();
+        let nonce = tx_count + 1;
+        let to_add = Address::from_str("0x5BC1D5aDb1d2df84f2F92C61242Db34fa0194bc2").unwrap();
         let gas = 0x0f4240;
-        let gas_price = U256::from_str("0x3b9aca00").unwrap();
-        let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
-        let chain_id = 0x067932;
+        let gas_price = U256::from_str("0x6c9aca00").unwrap();
+        let input = Bytes::from_str("0x507235530000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000745544855534454").unwrap();
+        let chain_id = 0x1008c45;
         let tx = TransactionRequest::default()
             .to(Some(to_add))
             .gas_limit(U256::from(gas))
@@ -613,15 +623,18 @@ mod tests {
         
         let pk = "0x1111111111111111111111111111111111111111111111111111111111111111";
         let wallet: LocalWallet = pk.parse().unwrap();    
-        let rpc_url = url::Url::parse("https://rpc.rigil.suave.flashbots.net").unwrap();
-        let signer = SuaveSigner::from(wallet);
+        
+        let signer = SuaveSigner::from(wallet.clone());
         // let provider =
         //     ProviderBuilder::new().signer(signer).on_reqwest_http(rpc_url)?;
         let provider = ProviderBuilder::<_, SuaveNetwork>::default().signer(signer).on_reqwest_http(rpc_url).unwrap();
-        let result = provider.send_transaction(cc_request).await.unwrap();
-        println!("{:?}", result);
-        // provider.send_transaction(cc_request).await.unwrap();
         
+        let result = provider.send_transaction(cc_request).await.unwrap();
+        let tx_hash = B256::from_slice(&result.tx_hash().to_vec());
+        println!("Tx Hash: {:?}", tx_hash);
+        let tx_response = provider.get_transaction_by_hash(tx_hash).await.unwrap();
+        println!("{:#?}", tx_response);
+        // provider.send_transaction(cc_request).await.unwrap();
 
     }
 
