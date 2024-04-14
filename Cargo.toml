@@ -25,11 +25,13 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features =
     "signer-wallet",
     "signer-yubihsm",
     "consensus",
-    "eips"
+    "eips",
+    "serde",
 ] }
 alloy-rlp = { version = "0.3.4", features = ["derive"] }
 async-trait = "0.1.79"
 eyre = "0.6.12"
 serde = { version = "1.0.197", features = ["serde_derive", "derive"] }
+serde_json = "1.0.115"
 tokio = { version = "1.37.0", features = ["full"] }
 url = "2.5.0"

@@ -995,6 +995,7 @@ dependencies = [
  "async-trait",
  "eyre",
  "serde",
+ "serde_json",
  "tokio",
  "url",
 ]

@@ -1,10 +1,10 @@
 use alloy::{
-    rpc::types::eth::{Header as EthHeader, Transaction as TransactionResponse, TransactionReceipt},
-    network::{ BuilderResult, Network, NetworkSigner, TransactionBuilder },
-    primitives::{Address, Bytes, ChainId, TxKind, U256, B256}, 
     consensus::{self, SignableTransaction, TxEnvelope}, 
+    network::{ BuilderResult, Network, NetworkSigner, TransactionBuilder }, 
+    primitives::{Address, Bytes, ChainId, TxKind, B256, U256}, 
+    rpc::types::eth::{Header as EthHeader, TransactionReceipt}
 };
-use crate::ccr::ConfidentialComputeRequest;
+use crate::ccr::{ConfidentialComputeRequest, ConfidentialCallResponse};
 
 
 #[derive(Debug, Clone, Copy)]
@@ -16,7 +16,7 @@ impl Network for SuaveNetwork {
     type ReceiptEnvelope = TxEnvelope;
     type Header = consensus::Header;
     type TransactionRequest = ConfidentialComputeRequest;
-    type TransactionResponse = TransactionResponse; //todo: speical type for this
+    type TransactionResponse = ConfidentialCallResponse;
     type ReceiptResponse = TransactionReceipt;
     type HeaderResponse = EthHeader;
 }
@@ -41,11 +41,11 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     }
 
     fn input(&self) -> Option<&Bytes> {
-        Some(&self.confidential_compute_record.data)
+        Some(&self.confidential_compute_record.input)
     }
 
     fn set_input(&mut self, input: Bytes) {
-        self.confidential_compute_record.data = input;
+        self.confidential_compute_record.input = input;
     }
 
     fn from(&self) -> Option<Address> {

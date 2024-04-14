@@ -67,7 +67,7 @@ mod tests {
     use std::str::FromStr;
     use eyre::Result;
     use alloy::{
-        primitives::{B256, Address, Bytes, U256}, 
+        primitives::{Address, Bytes, B256, U256}, 
         providers::{Provider, ProviderBuilder}, 
         rpc::types::eth::TransactionRequest, 
         signers::wallet::LocalWallet,
@@ -77,7 +77,7 @@ mod tests {
     use super::super::network::SuaveNetwork;
     use super::*;
 
-
+    // todo: dont rely on external conditions for testing
     #[tokio::test]
     async fn test_send_tx_rigil() -> Result<()> {
         let rpc_url = url::Url::parse("https://rpc.rigil.suave.flashbots.net").unwrap();
@@ -91,7 +91,7 @@ mod tests {
         let nonce = tx_count;
         let to_add = Address::from_str("0xc803334c79650708Daf3a3462AC4B48296b1352a").unwrap();
         let gas = 0x0f4240;
-        let gas_price = U256::from_str("0x1c9aca00").unwrap();
+        let gas_price = U256::from_str("0x3c9aca00").unwrap();
         let input = Bytes::from_str("0x50723553000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000074554485553445400").unwrap();
         let chain_id = 0x1008c45;
         let tx = TransactionRequest::default()
@@ -112,10 +112,9 @@ mod tests {
         let result = provider.send_transaction(cc_request).await.unwrap();
         let tx_hash = B256::from_slice(&result.tx_hash().to_vec());
         let tx_response = provider.get_transaction_by_hash(tx_hash).await.unwrap();
-        
-        let cc_result = tx_response.other.get("confidentialComputeResult").unwrap().as_str().unwrap();
-        let price = u128::from_str_radix(cc_result.trim_start_matches("0x"), 16).unwrap();
-        assert!(price > 0);
+  
+        let price = U256::try_from_be_slice(&tx_response.confidential_compute_result.to_vec()).unwrap();
+        assert!(price > U256::ZERO);
 
         Ok(())
     }

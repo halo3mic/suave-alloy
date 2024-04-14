@@ -14,6 +14,7 @@ const CONFIDENTIAL_COMPUTE_REQUEST_TYPE: u8 = 0x43;
 
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct ConfidentialComputeRequest {
     pub confidential_compute_record: ConfidentialComputeRecord,
     pub confidential_inputs: Bytes,

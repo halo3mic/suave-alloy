@@ -22,7 +22,9 @@ pub struct ConfidentialComputeRecord {
     pub kettle_address: Address,
     #[serde(with = "alloy_serde::num::u64_hex")]
     pub chain_id: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub confidential_inputs_hash: Option<FixedBytes<32>>,
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub signature: Option<Signature>,
 }
 
