@@ -4,18 +4,23 @@ use eyre::{Result, eyre};
 use alloy::{
     primitives::{Address, Bytes, FixedBytes, U256, Signature}, 
     rpc::types::eth::TransactionRequest,
+    serde as alloy_serde,
 };
 
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct ConfidentialComputeRecord {
+    #[serde(with = "alloy_serde::num::u64_hex")]
     pub nonce: u64,
     pub to: Address,
+    #[serde(with = "alloy_serde::num::u64_hex")]
     pub gas: u64,
     pub gas_price: U256,
     pub value: U256,
-    pub data: Bytes,
-    pub execution_node: Address,
+    pub input: Bytes,
+    pub kettle_address: Address,
+    #[serde(with = "alloy_serde::num::u64_hex")]
     pub chain_id: u64,
     pub confidential_inputs_hash: Option<FixedBytes<32>>,
     pub signature: Option<Signature>,
@@ -32,12 +37,12 @@ impl ConfidentialComputeRecord {
             .and_then(|g| g.try_into().map_err(|_| eyre!("Gas overflow")))?;
         let chain_id = tx_req.chain_id.ok_or(eyre!("Missing chain_id field"))?;
         Ok(Self {
-            data: tx_req.input.input.unwrap_or(Bytes::new()),
+            input: tx_req.input.input.unwrap_or(Bytes::new()),
             gas_price: tx_req.gas_price.unwrap_or(U256::ZERO),
             value: tx_req.value.unwrap_or(U256::ZERO),
             to: tx_req.to.unwrap_or(Address::ZERO),
             nonce: tx_req.nonce.unwrap_or(0),
-            execution_node,
+            kettle_address: execution_node,
             chain_id,
             gas,
             confidential_inputs_hash: None,
@@ -109,8 +114,8 @@ impl From<&ConfidentialComputeRecord> for CRecordRLP {
             gas: ccr.gas,
             to: ccr.to,
             value: ccr.value,
-            data: ccr.data.clone(),
-            execution_node: ccr.execution_node,
+            data: ccr.input.clone(),
+            execution_node: ccr.kettle_address,
             confidential_inputs_hash: cinputs_hash,
             chain_id: ccr.chain_id,
             v, r, s
@@ -128,8 +133,8 @@ impl Into<ConfidentialComputeRecord> for CRecordRLP {
             gas: self.gas,
             to: self.to,
             value: self.value,
-            data: self.data,
-            execution_node: self.execution_node,
+            input: self.data,
+            kettle_address: self.execution_node,
             chain_id: self.chain_id,
             confidential_inputs_hash: Some(self.confidential_inputs_hash),
             signature: Some(sig),
@@ -138,7 +143,7 @@ impl Into<ConfidentialComputeRecord> for CRecordRLP {
 
 }
 
-fn signature_to_vrs(sig: Signature) -> (u8, U256, U256) {
+pub(crate) fn signature_to_vrs(sig: Signature) -> (u8, U256, U256) {
     let v = sig.v().recid().to_byte();
     let r = sig.r();
     let s = sig.s();
@@ -173,13 +178,13 @@ mod tests {
             .with_value(U256::from(0x2233));
         
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), execution_node)?;
-        assert_eq!(cc_record.execution_node, execution_node);
+        assert_eq!(cc_record.kettle_address, execution_node);
         assert_eq!(cc_record.to, to_add);
         assert_eq!(U256::from(cc_record.gas), tx.gas.unwrap());
         assert_eq!(cc_record.gas_price, tx.gas_price.unwrap());
         assert_eq!(cc_record.chain_id, chain_id);
         assert_eq!(cc_record.nonce, tx.nonce.unwrap());
-        assert_eq!(cc_record.data, tx.input.input.unwrap());
+        assert_eq!(cc_record.input, tx.input.input.unwrap());
         assert_eq!(cc_record.value, tx.value.unwrap());
         assert!(cc_record.confidential_inputs_hash.is_none());
         assert!(cc_record.signature.is_none());
@@ -196,13 +201,13 @@ mod tests {
             .with_chain_id(chain_id);
         
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), execution_node)?;
-        assert_eq!(cc_record.execution_node, execution_node);
+        assert_eq!(cc_record.kettle_address, execution_node);
         assert_eq!(cc_record.to, Address::ZERO);
         assert_eq!(U256::from(cc_record.gas), tx.gas.unwrap());
         assert_eq!(cc_record.gas_price, U256::ZERO);
         assert_eq!(cc_record.chain_id, chain_id);
         assert_eq!(cc_record.nonce, 0);
-        assert_eq!(cc_record.data, Bytes::new());
+        assert_eq!(cc_record.input, Bytes::new());
         assert_eq!(cc_record.value, U256::ZERO);
         assert!(cc_record.confidential_inputs_hash.is_none());
         assert!(cc_record.signature.is_none());

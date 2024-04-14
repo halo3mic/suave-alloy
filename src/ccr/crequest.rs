@@ -61,7 +61,7 @@ impl ConfidentialComputeRequest {
 impl Transaction for ConfidentialComputeRequest {
 
     fn input(&self) -> &[u8] {
-        self.confidential_compute_record.data.as_ref()
+        self.confidential_compute_record.input.as_ref()
     }
 
     fn to(&self) -> TxKind {
@@ -209,14 +209,14 @@ impl From<&ConfidentialComputeRequest> for CRequestHashParams {
         let cinputs_hash = ccr.confidential_compute_record.confidential_inputs_hash
             .expect("Missing confidential_inputs_hash");
         Self {
-            execution_node: ccr.confidential_compute_record.execution_node,
+            execution_node: ccr.confidential_compute_record.kettle_address,
             confidential_inputs_hash: cinputs_hash,
             nonce: ccr.confidential_compute_record.nonce,
             gas_price: ccr.confidential_compute_record.gas_price,
             gas: ccr.confidential_compute_record.gas,
             to: ccr.confidential_compute_record.to,
             value: ccr.confidential_compute_record.value,
-            data: ccr.confidential_compute_record.data.clone(),
+            data: ccr.confidential_compute_record.input.clone(),
         }
     }
 }
@@ -309,14 +309,14 @@ mod tests {
         let cinputs_hash = primitives::keccak256(&cinputs);
 
         let crecord = ConfidentialComputeRecord {
-            execution_node,
+            kettle_address: execution_node,
             confidential_inputs_hash: Some(cinputs_hash),
             nonce: 0x18,
             gas_price: U256::from_str("0x3b9aca00").unwrap(),
             gas: 0x0f4240,
             to: to_add,
             value: U256::ZERO,
-            data: input,
+            input,
             signature: None,
             chain_id: 1
         };
