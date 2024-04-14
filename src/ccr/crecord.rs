@@ -74,7 +74,7 @@ pub struct CRecordRLP {
     gas: u64,
     to: Address,
     value: U256,
-    data: Bytes,
+    input: Bytes,
     kettle_address: Address,
     confidential_inputs_hash: FixedBytes<32>,
     chain_id: u64,
@@ -91,7 +91,7 @@ impl CRecordRLP {
         len += self.gas.length();
         len += self.to.length();
         len += self.value.length();
-        len += self.data.0.length();
+        len += self.input.0.length();
         len += self.kettle_address.length();
         len += self.confidential_inputs_hash.length();
         len += self.chain_id.length();
@@ -116,7 +116,7 @@ impl From<&ConfidentialComputeRecord> for CRecordRLP {
             gas: ccr.gas,
             to: ccr.to,
             value: ccr.value,
-            data: ccr.input.clone(),
+            input: ccr.input.clone(),
             kettle_address: ccr.kettle_address,
             confidential_inputs_hash: cinputs_hash,
             chain_id: ccr.chain_id,
@@ -135,7 +135,7 @@ impl Into<ConfidentialComputeRecord> for CRecordRLP {
             gas: self.gas,
             to: self.to,
             value: self.value,
-            input: self.data,
+            input: self.input,
             kettle_address: self.kettle_address,
             chain_id: self.chain_id,
             confidential_inputs_hash: Some(self.confidential_inputs_hash),

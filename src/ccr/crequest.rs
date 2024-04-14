@@ -188,7 +188,7 @@ struct CRequestHashParams {
     gas: u64,
     to: Address,
     value: U256,
-    data: Bytes,
+    input: Bytes,
 }
 
 impl CRequestHashParams {
@@ -200,7 +200,7 @@ impl CRequestHashParams {
         len += self.gas_price.length();
         len += self.to.length();
         len += self.value.length();
-        len += self.data.0.length();
+        len += self.input.0.length();
         len
     }
 }
@@ -217,7 +217,7 @@ impl From<&ConfidentialComputeRequest> for CRequestHashParams {
             gas: ccr.confidential_compute_record.gas,
             to: ccr.confidential_compute_record.to,
             value: ccr.confidential_compute_record.value,
-            data: ccr.confidential_compute_record.input.clone(),
+            input: ccr.confidential_compute_record.input.clone(),
         }
     }
 }
@@ -292,7 +292,7 @@ mod tests {
             gas: 0x0f4240,
             to: to_add,
             value: U256::ZERO,
-            data: input,
+            input,
         };
         let encoded = encode_with_prefix(CONFIDENTIAL_COMPUTE_RECORD_TYPE, hash_params);
         let hash = primitives::keccak256(&encoded);
