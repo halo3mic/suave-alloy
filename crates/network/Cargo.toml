@@ -13,11 +13,13 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features =
     "network",
     "providers",
     "provider-http",
+    "rpc-client",
     "rpc-types-trace",
     "signers",
 ] }
 
 reqwest = "0.12.3"
+url = "2.2.2"
 async-trait.workspace = true
 
 [dev-dependencies]
