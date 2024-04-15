@@ -7,5 +7,9 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
-suave-alloy-types = { workspace = true, default-features = false }
-suave-alloy-network = { workspace = true, default-features = false }
+suave-alloy-types = { workspace = true }
+suave-alloy-network = { workspace = true, optional = true }
+
+[features]
+default = ["network"]
+network = ["suave-alloy-network"]

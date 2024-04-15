@@ -24,11 +24,13 @@ impl ConfidentialComputeRequest {
 
     pub fn new(
         mut confidential_compute_record: ConfidentialComputeRecord, 
-        confidential_inputs: Bytes,
+        confidential_inputs: Option<Bytes>,
     ) -> Self {
-        let ci_hash = primitives::keccak256(&confidential_inputs);
-        confidential_compute_record.set_confidential_inputs_hash(ci_hash);
-
+        let confidential_inputs = confidential_inputs.unwrap_or_default();
+        Self::set_confidential_inputs_hash(
+            &mut confidential_compute_record, 
+            &confidential_inputs
+        );
         Self {
             confidential_compute_record,
             confidential_inputs,
@@ -46,6 +48,44 @@ impl ConfidentialComputeRequest {
         );
         
         Ok(rlp_encoded)
+    }
+
+    pub fn kettle_address(&self) -> Address {
+        self.confidential_compute_record.kettle_address
+    }
+
+    pub fn with_kettle_address(mut self, kettle_address: Address) -> Self {
+        self.set_kettle_address(kettle_address);
+        self
+    }
+
+    pub fn set_kettle_address(&mut self, kettle_address: Address) {
+        self.confidential_compute_record.kettle_address = kettle_address;
+    }
+
+    pub fn with_confidential_inputs(mut self, confidential_inputs: Bytes) -> Self {
+        self.set_confidential_inputs(confidential_inputs);
+        self
+    }
+
+    pub fn set_confidential_inputs(&mut self, confidential_inputs: Bytes) {
+        Self::set_confidential_inputs_hash(
+            &mut self.confidential_compute_record, 
+            &confidential_inputs
+        );
+        self.confidential_inputs = confidential_inputs;
+    }
+
+    pub fn confidential_inputs(&self) -> Bytes {
+        self.confidential_inputs.clone()
+    }
+
+    fn set_confidential_inputs_hash(
+        record: &mut ConfidentialComputeRecord, 
+        confidential_inputs: &Bytes
+    ) {
+        let ci_hash = primitives::keccak256(confidential_inputs);
+        record.set_confidential_inputs_hash(ci_hash);
     }
 
     fn hash(&self) -> FixedBytes<32> {
@@ -266,7 +306,7 @@ mod tests {
         cc_record.set_sig(sig);
 
         let confidential_inputs = Bytes::from_str("0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001ea7b22747873223a5b7b2274797065223a22307830222c226e6f6e6365223a22307830222c22746f223a22307863613135656439393030366236623130363038653236313631373361313561343766383933613661222c22676173223a22307835323038222c226761735072696365223a22307864222c226d61785072696f72697479466565506572476173223a6e756c6c2c226d6178466565506572476173223a6e756c6c2c2276616c7565223a223078336538222c22696e707574223a223078222c2276223a2230786366323838222c2272223a22307863313764616536383866396262393632376563636439626636393133626661346539643232383139353134626539323066343435653263666165343366323965222c2273223a22307835633337646235386263376161336465306535656638613432353261366632653464313462613639666338323631636333623630633962643236613634626265222c2268617368223a22307862643263653662653964333461366132393934373239346662656137643461343834646663363565643963383931396533626539366131353634363630656265227d5d2c2270657263656e74223a31302c224d617463684964223a5b302c302c302c302c302c302c302c302c302c302c302c302c302c302c302c305d7d00000000000000000000000000000000000000000000").unwrap();
-        let cc_request = ConfidentialComputeRequest::new(cc_record, confidential_inputs);
+        let cc_request = ConfidentialComputeRequest::new(cc_record, Some(confidential_inputs));
         let rlp_encoded = cc_request.rlp_encode().unwrap();
 
         let expected_rlp_encoded = Bytes::from_str("0x43f903a9f9016322843b9aca00830f424094780675d71ebe3d3ef05fae379063071147dd3aee80b8c4236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000947d83e42b214b75bf1f3e57adc3415da573d97bffa089ee438ca379ac86b0478517d43a6a9e078cf51543acac0facd68aff313e2ff18306793280a01567c31c4bebcd1061edbaf22dd73fd40ff30f9a3ba4525037f23b2dc61e3473a02dce69262794a499d525c5d58edde33e06a5847b4d321d396b743700a2fd71a8b90240000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001ea7b22747873223a5b7b2274797065223a22307830222c226e6f6e6365223a22307830222c22746f223a22307863613135656439393030366236623130363038653236313631373361313561343766383933613661222c22676173223a22307835323038222c226761735072696365223a22307864222c226d61785072696f72697479466565506572476173223a6e756c6c2c226d6178466565506572476173223a6e756c6c2c2276616c7565223a223078336538222c22696e707574223a223078222c2276223a2230786366323838222c2272223a22307863313764616536383866396262393632376563636439626636393133626661346539643232383139353134626539323066343435653263666165343366323965222c2273223a22307835633337646235386263376161336465306535656638613432353261366632653464313462613639666338323631636333623630633962643236613634626265222c2268617368223a22307862643263653662653964333461366132393934373239346662656137643461343834646663363565643963383931396533626539366131353634363630656265227d5d2c2270657263656e74223a31302c224d617463684964223a5b302c302c302c302c302c302c302c302c302c302c302c302c302c302c302c305d7d00000000000000000000000000000000000000000000").unwrap();
@@ -350,7 +390,7 @@ mod tests {
             .with_nonce(nonce)
             .with_input(input);
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx, kettle_address)?;
-        let mut cc_request = ConfidentialComputeRequest::new(cc_record, cinputs); 
+        let mut cc_request = ConfidentialComputeRequest::new(cc_record, Some(cinputs)); 
 
         // Sign
         let pk = "0x1111111111111111111111111111111111111111111111111111111111111111";
@@ -388,7 +428,7 @@ mod tests {
         let r = U256::from_str("0x1567c31c4bebcd1061edbaf22dd73fd40ff30f9a3ba4525037f23b2dc61e3473").unwrap();
         let s = U256::from_str("0x2dce69262794a499d525c5d58edde33e06a5847b4d321d396b743700a2fd71a8").unwrap();
         cc_record.signature = Some(Signature::from_rs_and_parity(r, s, v).unwrap());
-        let cc_request = ConfidentialComputeRequest::new(cc_record, cinputs);
+        let cc_request = ConfidentialComputeRequest::new(cc_record, Some(cinputs));
 
         let mut encoded = Vec::new();
         cc_request.encode_2718(&mut encoded);
