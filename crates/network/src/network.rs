@@ -1,10 +1,10 @@
+use suave_alloy_types::{ConfidentialComputeRequest, ConfidentialCallResponse};
 use alloy::{
     consensus::{self, SignableTransaction, TxEnvelope}, 
     network::{ BuilderResult, Network, NetworkSigner, TransactionBuilder }, 
     primitives::{Address, Bytes, ChainId, TxKind, B256, U256}, 
     rpc::types::eth::{Header as EthHeader, TransactionReceipt}
 };
-use crate::types::{ConfidentialComputeRequest, ConfidentialCallResponse};
 
 
 #[derive(Debug, Clone, Copy)]

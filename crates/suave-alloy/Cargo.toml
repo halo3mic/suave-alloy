@@ -1,0 +1,11 @@
+[package]
+name = "suave-alloy"
+
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+suave-alloy-types = { workspace = true, default-features = false }
+suave-alloy-network = { workspace = true, default-features = false }
