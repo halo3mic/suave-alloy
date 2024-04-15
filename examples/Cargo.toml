@@ -1,0 +1,31 @@
+[package]
+name = "examples"
+
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+suave-alloy = { path = "../crates/suave-alloy" }
+
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features = [
+    "providers",
+    "rpc-types-trace",
+    "signer-wallet",
+    "network",
+    "signers",
+    "contract",
+    "provider-http",
+    "rpc-client",
+    "rpc-types-eth",
+    "consensus",
+    "eips",
+    "serde",
+] }
+tokio.workspace = true
+eyre.workspace = true
+
+[[example]]
+name = "submit_ccr"
+path = "submit_ccr.rs"

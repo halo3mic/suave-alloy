@@ -1,0 +1,29 @@
+[package]
+name = "suave-alloy-types"
+
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features = [
+    "network",
+    "rpc-types-eth",
+    "signers",
+    "consensus",
+    "eips",
+    "serde",
+] }
+alloy-rlp.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+eyre.workspace = true
+
+
+[dev-dependencies]
+tokio.workspace = true
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features = [
+    "signer-wallet"
+] }
