@@ -34,22 +34,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kettle = provider.kettle_address().await.unwrap();
 
     // Create a confidential-compute-request 
-    let tx = TransactionRequest::default()
-        .to(Some(to_add))
-        .gas_limit(U256::from(gas))
+    let ccr = ConfidentialComputeRequest::default()
+        .with_gas_limit(U256::from(gas))
+        .with_to(Some(to_add).into())
         .with_gas_price(gas_price)
         .with_chain_id(chain_id)
         .with_nonce(tx_count)
-        .with_input(input);
-    let cc_record = ConfidentialComputeRecord::from_tx_request(tx, kettle)?;
-    let cc_request = ConfidentialComputeRequest::new(cc_record, cinputs);
+        .with_input(input)
+        .with_confidential_inputs(cinputs)
+        .with_kettle_address(kettle);
 
     // Create a signer
     let wallet: LocalWallet = "0x1111111111111111111111111111111111111111111111111111111111111111".parse().unwrap();    
     let signer = SuaveSigner::from(wallet.clone());
     let provider = ProviderBuilder::default().signer(signer).provider(provider);
 
-    let result = provider.send_transaction(cc_request).await.unwrap();
+    let result = provider.send_transaction(ccr).await.unwrap();
     let tx_hash = B256::from_slice(&result.tx_hash().to_vec());
     let tx_response = provider.get_transaction_by_hash(tx_hash).await.unwrap();
 

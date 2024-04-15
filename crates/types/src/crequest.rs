@@ -26,9 +26,10 @@ impl ConfidentialComputeRequest {
         mut confidential_compute_record: ConfidentialComputeRecord, 
         confidential_inputs: Bytes,
     ) -> Self {
-        let ci_hash = primitives::keccak256(&confidential_inputs);
-        confidential_compute_record.set_confidential_inputs_hash(ci_hash);
-
+        Self::set_confidential_inputs_hash(
+            &mut confidential_compute_record, 
+            &confidential_inputs
+        );
         Self {
             confidential_compute_record,
             confidential_inputs,
@@ -46,6 +47,44 @@ impl ConfidentialComputeRequest {
         );
         
         Ok(rlp_encoded)
+    }
+
+    pub fn kettle_address(&self) -> Address {
+        self.confidential_compute_record.kettle_address
+    }
+
+    pub fn with_kettle_address(mut self, kettle_address: Address) -> Self {
+        self.set_kettle_address(kettle_address);
+        self
+    }
+
+    pub fn set_kettle_address(&mut self, kettle_address: Address) {
+        self.confidential_compute_record.kettle_address = kettle_address;
+    }
+
+    pub fn with_confidential_inputs(mut self, confidential_inputs: Bytes) -> Self {
+        self.set_confidential_inputs(confidential_inputs);
+        self
+    }
+
+    pub fn set_confidential_inputs(&mut self, confidential_inputs: Bytes) {
+        Self::set_confidential_inputs_hash(
+            &mut self.confidential_compute_record, 
+            &confidential_inputs
+        );
+        self.confidential_inputs = confidential_inputs;
+    }
+
+    pub fn confidential_inputs(&self) -> Bytes {
+        self.confidential_inputs.clone()
+    }
+
+    fn set_confidential_inputs_hash(
+        record: &mut ConfidentialComputeRecord, 
+        confidential_inputs: &Bytes
+    ) {
+        let ci_hash = primitives::keccak256(confidential_inputs);
+        record.set_confidential_inputs_hash(ci_hash);
     }
 
     fn hash(&self) -> FixedBytes<32> {
