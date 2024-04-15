@@ -46,10 +46,12 @@ async fn main() -> Result<()> {
         .with_confidential_inputs(cinputs)
         .with_kettle_address(kettle);
     
+    // Send CCR
     let result = provider.send_transaction(ccr).await?;
     let tx_hash = B256::from_slice(&result.tx_hash().to_vec());
-    let tx_response = provider.get_transaction_by_hash(tx_hash).await?;
 
+    // Obtain CCR Response with record and compute-result
+    let tx_response = provider.get_transaction_by_hash(tx_hash).await?;
     println!("{tx_response:#?}");
 
     let price = U256::try_from_be_slice(&tx_response.confidential_compute_result.to_vec())
