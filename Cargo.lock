@@ -493,6 +493,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloy-suave"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "alloy-rlp",
+ "async-trait",
+ "eyre",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "alloy-transport"
 version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=bfd0fda#bfd0fda492e560c3463d521958793c81bbeadfc1"
@@ -985,21 +1000,6 @@ name = "cc"
 version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd97381a8cc6493395a5afc4c691c1084b3768db713b73aa215217aa245d153"
-
-[[package]]
-name = "ccr-rs"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "alloy-rlp",
- "async-trait",
- "eyre",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
- "url",
-]
 
 [[package]]
 name = "cfg-if"

@@ -4,7 +4,7 @@ use alloy::{
     primitives::{Address, Bytes, ChainId, TxKind, B256, U256}, 
     rpc::types::eth::{Header as EthHeader, TransactionReceipt}
 };
-use crate::ccr::{ConfidentialComputeRequest, ConfidentialCallResponse};
+use crate::types::{ConfidentialComputeRequest, ConfidentialCallResponse};
 
 
 #[derive(Debug, Clone, Copy)]

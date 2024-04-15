@@ -1,2 +1,2 @@
-pub mod ccr;
+pub mod types;
 pub mod network;

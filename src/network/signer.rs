@@ -6,7 +6,7 @@ use alloy::{
 use async_trait::async_trait;
 use std::sync::Arc;
 
-use crate::ccr::ConfidentialComputeRequest;
+use crate::types::ConfidentialComputeRequest;
 
 
 #[derive(Clone)]
@@ -72,7 +72,7 @@ mod tests {
         signers::wallet::LocalWallet,
         network::TransactionBuilder,
     };
-    use crate::ccr::ConfidentialComputeRecord;
+    use crate::types::ConfidentialComputeRecord;
     use super::super::{
         provider::SuaveProvider,
         network::SuaveNetwork,
