@@ -38,24 +38,61 @@ checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
 [[package]]
 name = "alloy"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-consensus 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-contract 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-core",
+ "alloy-eips 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-genesis 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-network 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-provider 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-rpc-client 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-rpc-types-trace 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-serde 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-signer 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-signer-wallet 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-transport 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-transport-http 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "reqwest",
+]
+
+[[package]]
+name = "alloy"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-consensus",
- "alloy-contract",
+ "alloy-consensus 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-contract 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-core",
- "alloy-eips",
- "alloy-genesis",
- "alloy-network",
- "alloy-provider",
- "alloy-rpc-client",
- "alloy-rpc-types",
- "alloy-rpc-types-trace",
- "alloy-serde",
- "alloy-signer",
- "alloy-signer-wallet",
- "alloy-transport",
- "alloy-transport-http",
+ "alloy-eips 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-genesis 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-network 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-provider 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-rpc-client 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-rpc-types-trace 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-signer 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-signer-wallet 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-transport 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-transport-http 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "reqwest",
+]
+
+[[package]]
+name = "alloy-consensus"
+version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-eips 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-primitives",
+ "alloy-rlp",
+ "alloy-serde 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "c-kzg",
+ "serde",
+ "sha2",
 ]
 
 [[package]]
@@ -63,13 +100,31 @@ name = "alloy-consensus"
 version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-eips",
+ "alloy-eips 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde",
+ "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "c-kzg",
  "serde",
  "sha2",
+]
+
+[[package]]
+name = "alloy-contract"
+version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-dyn-abi",
+ "alloy-json-abi",
+ "alloy-network 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-primitives",
+ "alloy-provider 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-sol-types",
+ "alloy-transport 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "futures",
+ "futures-util",
+ "thiserror",
 ]
 
 [[package]]
@@ -79,12 +134,12 @@ source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
- "alloy-network",
+ "alloy-network 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-primitives",
- "alloy-provider",
- "alloy-rpc-types",
+ "alloy-provider 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-sol-types",
- "alloy-transport",
+ "alloy-transport 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "futures",
  "futures-util",
  "thiserror",
@@ -122,13 +177,36 @@ dependencies = [
 [[package]]
 name = "alloy-eips"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-primitives",
+ "alloy-rlp",
+ "alloy-serde 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "c-kzg",
+ "once_cell",
+ "serde",
+]
+
+[[package]]
+name = "alloy-eips"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde",
+ "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "c-kzg",
  "once_cell",
+ "serde",
+]
+
+[[package]]
+name = "alloy-genesis"
+version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-primitives",
+ "alloy-serde 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
  "serde",
 ]
 
@@ -138,7 +216,7 @@ version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
  "alloy-primitives",
- "alloy-serde",
+ "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "serde",
 ]
 
@@ -157,6 +235,18 @@ dependencies = [
 [[package]]
 name = "alloy-json-rpc"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-primitives",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "alloy-json-rpc"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
  "alloy-primitives",
@@ -169,14 +259,30 @@ dependencies = [
 [[package]]
 name = "alloy-network"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-consensus 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-eips 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-json-rpc 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-primitives",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-signer 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "async-trait",
+ "futures-utils-wasm",
+ "thiserror",
+]
+
+[[package]]
+name = "alloy-network"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-consensus",
- "alloy-eips",
- "alloy-json-rpc",
+ "alloy-consensus 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-eips 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-json-rpc 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-primitives",
- "alloy-rpc-types",
- "alloy-signer",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-signer 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "async-trait",
  "futures-utils-wasm",
  "thiserror",
@@ -207,17 +313,45 @@ dependencies = [
 [[package]]
 name = "alloy-provider"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-eips 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-json-rpc 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-network 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-primitives",
+ "alloy-rpc-client 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-rpc-types-trace 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-transport 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-transport-http 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "async-stream",
+ "async-trait",
+ "auto_impl",
+ "dashmap",
+ "futures",
+ "futures-utils-wasm",
+ "lru",
+ "reqwest",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "alloy-provider"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-eips",
- "alloy-json-rpc",
- "alloy-network",
+ "alloy-eips 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-json-rpc 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-network 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-primitives",
- "alloy-rpc-client",
- "alloy-rpc-types",
- "alloy-rpc-types-trace",
- "alloy-transport",
- "alloy-transport-http",
+ "alloy-rpc-client 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-rpc-types-trace 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-transport 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-transport-http 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "async-stream",
  "async-trait",
  "auto_impl",
@@ -257,11 +391,31 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-client"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-json-rpc 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-transport 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-transport-http 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "futures",
+ "pin-project",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+ "tower",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "alloy-rpc-client"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-json-rpc",
- "alloy-transport",
- "alloy-transport-http",
+ "alloy-json-rpc 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-transport 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-transport-http 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "futures",
  "pin-project",
  "reqwest",
@@ -277,14 +431,32 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-types"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
 dependencies = [
- "alloy-consensus",
- "alloy-eips",
- "alloy-genesis",
+ "alloy-consensus 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-eips 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-genesis 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde",
+ "alloy-serde 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-sol-types",
+ "itertools 0.12.1",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "alloy-rpc-types"
+version = "0.1.0"
+source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
+dependencies = [
+ "alloy-consensus 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-eips 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-genesis 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-primitives",
+ "alloy-rlp",
+ "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-sol-types",
  "itertools 0.12.1",
  "serde",
@@ -295,11 +467,33 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-types-trace"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-primitives",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-serde 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "alloy-rpc-types-trace"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
  "alloy-primitives",
- "alloy-rpc-types",
- "alloy-serde",
+ "alloy-rpc-types 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "alloy-serde"
+version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-primitives",
  "serde",
  "serde_json",
 ]
@@ -312,6 +506,19 @@ dependencies = [
  "alloy-primitives",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "alloy-signer"
+version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-primitives",
+ "async-trait",
+ "auto_impl",
+ "elliptic-curve",
+ "k256",
+ "thiserror",
 ]
 
 [[package]]
@@ -330,12 +537,27 @@ dependencies = [
 [[package]]
 name = "alloy-signer-wallet"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-consensus 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-network 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-primitives",
+ "alloy-signer 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "async-trait",
+ "k256",
+ "rand",
+ "thiserror",
+]
+
+[[package]]
+name = "alloy-signer-wallet"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-consensus",
- "alloy-network",
+ "alloy-consensus 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-network 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "alloy-primitives",
- "alloy-signer",
+ "alloy-signer 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "async-trait",
  "k256",
  "rand",
@@ -403,9 +625,27 @@ dependencies = [
 [[package]]
 name = "alloy-transport"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-json-rpc 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "base64",
+ "futures-util",
+ "futures-utils-wasm",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tower",
+ "url",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
+name = "alloy-transport"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-json-rpc",
+ "alloy-json-rpc 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "base64",
  "futures-util",
  "futures-utils-wasm",
@@ -421,10 +661,23 @@ dependencies = [
 [[package]]
 name = "alloy-transport-http"
 version = "0.1.0"
+source = "git+https://github.com/halo3mic/alloy?branch=dev2#d0d743528ee5125f543db908f00fe53a8e48eae7"
+dependencies = [
+ "alloy-json-rpc 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "alloy-transport 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
+ "reqwest",
+ "serde_json",
+ "tower",
+ "url",
+]
+
+[[package]]
+name = "alloy-transport-http"
+version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy?rev=e7542d7#e7542d7bfd06837c3578ac58266dd6a31e6f75b0"
 dependencies = [
- "alloy-json-rpc",
- "alloy-transport",
+ "alloy-json-rpc 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
+ "alloy-transport 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "reqwest",
  "serde_json",
  "tower",
@@ -977,7 +1230,7 @@ dependencies = [
 name = "examples"
 version = "0.0.0"
 dependencies = [
- "alloy",
+ "alloy 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=e7542d7)",
  "eyre",
  "suave-alloy",
  "tokio",
@@ -2337,7 +2590,7 @@ dependencies = [
 name = "suave-alloy-network"
 version = "0.0.0"
 dependencies = [
- "alloy",
+ "alloy 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
  "async-trait",
  "eyre",
  "reqwest",
@@ -2350,7 +2603,7 @@ dependencies = [
 name = "suave-alloy-types"
 version = "0.0.0"
 dependencies = [
- "alloy",
+ "alloy 0.1.0 (git+https://github.com/halo3mic/alloy?branch=dev2)",
  "alloy-rlp",
  "async-trait",
  "eyre",
