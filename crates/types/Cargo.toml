@@ -7,7 +7,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
-alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features = [
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
     "network",
     "rpc-types-eth",
     "signers",
@@ -24,6 +24,6 @@ eyre.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true
-alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features = [
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
     "signer-wallet"
 ] }

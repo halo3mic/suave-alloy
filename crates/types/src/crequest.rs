@@ -121,11 +121,11 @@ impl Transaction for ConfidentialComputeRequest {
         self.confidential_compute_record.nonce
     }
 
-    fn gas_limit(&self) -> u64 {
-        self.confidential_compute_record.gas
+    fn gas_limit(&self) -> u128 {
+        self.confidential_compute_record.gas.into()
     }
 
-    fn gas_price(&self) -> Option<U256> {
+    fn gas_price(&self) -> Option<u128> {
         Some(self.confidential_compute_record.gas_price)
     }
 
@@ -224,8 +224,8 @@ struct CRequestHashParams {
     kettle_address: Address,
     confidential_inputs_hash: FixedBytes<32>,
     nonce: u64,
-    gas_price: U256,
-    gas: u64,
+    gas_price: u128,
+    gas: u128,
     to: Address,
     value: U256,
     input: Bytes,
@@ -290,9 +290,9 @@ mod tests {
         let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
         let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let tx = TransactionRequest::default()
-            .to(Some(to_add))
-            .gas_limit(U256::from(0x0f4240))
-            .with_gas_price(U256::from(0x3b9aca00))
+            .to(to_add)
+            .gas_limit(0x0f4240_u128)
+            .with_gas_price(0x3b9aca00_u128)
             .with_chain_id(chain_id)
             .with_nonce(0x22)
             .with_input(input);
@@ -328,7 +328,7 @@ mod tests {
             kettle_address,
             confidential_inputs_hash: cinputs_hash,
             nonce: 0x18,
-            gas_price: U256::from_str("0x3b9aca00").unwrap(),
+            gas_price: 0x3b9aca00,
             gas: 0x0f4240,
             to: to_add,
             value: U256::ZERO,
@@ -353,7 +353,7 @@ mod tests {
             kettle_address: kettle_address,
             confidential_inputs_hash: Some(cinputs_hash),
             nonce: 0x18,
-            gas_price: U256::from_str("0x3b9aca00").unwrap(),
+            gas_price: 0x3b9aca00,
             gas: 0x0f4240,
             to: to_add,
             value: U256::ZERO,
@@ -379,12 +379,12 @@ mod tests {
         let nonce = 0x22;
         let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
         let gas = 0x0f4240;
-        let gas_price = U256::from_str("0x3b9aca00").unwrap();
+        let gas_price = 0x3b9aca00;
         let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let chain_id = 0x067932;
         let tx = TransactionRequest::default()
-            .to(Some(to_add))
-            .gas_limit(U256::from(gas))
+            .to(to_add)
+            .gas_limit(gas)
             .with_gas_price(gas_price)
             .with_chain_id(chain_id)
             .with_nonce(nonce)
@@ -412,12 +412,12 @@ mod tests {
         let nonce = 0x22;
         let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
         let gas = 0x0f4240;
-        let gas_price = U256::from_str("0x3b9aca00").unwrap();
+        let gas_price = 0x3b9aca00;
         let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let chain_id = 0x067932;
         let tx = TransactionRequest::default()
-            .to(Some(to_add))
-            .gas_limit(U256::from(gas))
+            .to(to_add)
+            .gas_limit(gas)
             .with_gas_price(gas_price)
             .with_chain_id(chain_id)
             .with_nonce(nonce)

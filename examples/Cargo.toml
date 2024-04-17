@@ -9,7 +9,7 @@ license.workspace = true
 [dependencies]
 suave-alloy = { path = "../crates/suave-alloy" }
 
-alloy = { git = "https://github.com/alloy-rs/alloy", rev = "bfd0fda", features = [
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
     "providers",
     "rpc-types-trace",
     "signer-wallet",

@@ -1,16 +1,66 @@
 use suave_alloy_types::{ConfidentialComputeRequest, ConfidentialCallResponse};
 use alloy::{
-    consensus::{self, SignableTransaction, TxEnvelope}, 
-    network::{ BuilderResult, Network, NetworkSigner, TransactionBuilder }, 
+    network::{ BuildResult, Network, NetworkSigner, TransactionBuilder, TransactionBuilderError }, 
+    rpc::types::eth::{Header as EthHeader, TransactionReceipt},
     primitives::{Address, Bytes, ChainId, TxKind, B256, U256}, 
-    rpc::types::eth::{Header as EthHeader, TransactionReceipt}
+    consensus::{self, SignableTransaction, TxEnvelope}, 
+    eips::eip2930::AccessList,
+    eips::eip2718::Eip2718Error,
 };
 
+
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum SuaveTxType {
+    /// Legacy transaction type.
+    Legacy = 0,
+    /// EIP-2930 transaction type.
+    Eip2930 = 1,
+    /// EIP-1559 transaction type.
+    Eip1559 = 2,
+    /// EIP-4844 transaction type.
+    Eip4844 = 3,
+    /// SUAVE "transaction" type
+    ConfidentialComputeRequest = 4,
+}
+
+impl From<SuaveTxType> for u8 {
+    fn from(value: SuaveTxType) -> Self {
+        value as u8
+    }
+}
+
+impl TryFrom<u8> for SuaveTxType {
+    type Error = Eip2718Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => SuaveTxType::Legacy,
+            1 => SuaveTxType::Eip2930,
+            2 => SuaveTxType::Eip1559,
+            3 => SuaveTxType::Eip4844,
+            _ => return Err(Eip2718Error::UnexpectedType(value)),
+        })
+    }
+}
+
+impl std::fmt::Display for SuaveTxType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SuaveTxType::Legacy => write!(f, "Legacy"),
+            SuaveTxType::Eip2930 => write!(f, "EIP-2930"),
+            SuaveTxType::Eip1559 => write!(f, "EIP-1559"),
+            SuaveTxType::Eip4844 => write!(f, "EIP-4844"),
+            SuaveTxType::ConfidentialComputeRequest => write!(f, "ConfidentialComputeRequest"),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct SuaveNetwork;
 
 impl Network for SuaveNetwork {
+    type TxType = SuaveTxType;
     type TxEnvelope = ConfidentialComputeRequest;
     type UnsignedTx = ConfidentialComputeRequest;
     type ReceiptEnvelope = TxEnvelope;
@@ -21,6 +71,7 @@ impl Network for SuaveNetwork {
     type HeaderResponse = EthHeader;
 }
 
+type SuaveBuildResult<T> = BuildResult<T, SuaveNetwork>;
 
 impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
 
@@ -79,49 +130,45 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
         self.confidential_compute_record.value = value;
     }
 
-    fn gas_price(&self) -> Option<U256> {
+    fn gas_price(&self) -> Option<u128> {
         Some(self.confidential_compute_record.gas_price)
     }
 
-    fn set_gas_price(&mut self, gas_price: U256) {
+    fn set_gas_price(&mut self, gas_price: u128) {
         self.confidential_compute_record.gas_price = gas_price;
     }
 
-    fn max_fee_per_gas(&self) -> Option<U256> {
+    fn max_fee_per_gas(&self) -> Option<u128> {
         None
     }
 
-    fn set_max_fee_per_gas(&mut self, _max_fee_per_gas: U256) {
+    fn set_max_fee_per_gas(&mut self, _max_fee_per_gas: u128) {
         panic!("Cannot set max fee per gas for confidential compute request");
     }
 
-    fn max_priority_fee_per_gas(&self) -> Option<U256> {
+    fn max_priority_fee_per_gas(&self) -> Option<u128> {
         None
     }
 
-    fn set_max_priority_fee_per_gas(&mut self, _max_priority_fee_per_gas: U256) {
+    fn set_max_priority_fee_per_gas(&mut self, _max_priority_fee_per_gas: u128) {
         panic!("Cannot set max priority fee per gas for confidential compute request");
     }
 
-    fn max_fee_per_blob_gas(&self) -> Option<U256> {
+    fn max_fee_per_blob_gas(&self) -> Option<u128> {
         None
     }
 
-    fn set_max_fee_per_blob_gas(&mut self, _max_fee_per_blob_gas: U256) {
+    fn set_max_fee_per_blob_gas(&mut self, _max_fee_per_blob_gas: u128) {
         panic!("Cannot set max fee per blob gas for confidential compute request");
     }
 
-    fn gas_limit(&self) -> Option<U256> {
-        Some(U256::from(self.confidential_compute_record.gas))
+    fn gas_limit(&self) -> Option<u128> {
+        Some(self.confidential_compute_record.gas)
     }
 
-    fn set_gas_limit(&mut self, gas_limit: U256) {
+    fn set_gas_limit(&mut self, gas_limit: u128) {
         let gas = gas_limit.try_into().expect("Overflowing gas param");
         self.confidential_compute_record.gas = gas;
-    }
-
-    fn get_blob_sidecar(&self) -> Option<&alloy::consensus::BlobTransactionSidecar> {
-        None
     }
 
     fn set_blob_sidecar(&mut self, _blob_sidecar: alloy::consensus::BlobTransactionSidecar) {
@@ -129,16 +176,61 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     }
 
     // todo: have a different struct for built and built-unsigned?
-    fn build_unsigned(self) -> BuilderResult<<SuaveNetwork as Network>::UnsignedTx>{
+    fn build_unsigned(self) -> SuaveBuildResult<<SuaveNetwork as Network>::UnsignedTx>{
         Ok(self)
     }
 
     async fn build<S: NetworkSigner<SuaveNetwork>>(
         self,
         signer: &S,
-    ) -> BuilderResult<<SuaveNetwork as Network>::TxEnvelope> {
-        signer.sign_transaction(self.build_unsigned()?).await.map_err(|e| e.into())
+    ) -> Result<<SuaveNetwork as Network>::TxEnvelope, TransactionBuilderError<SuaveNetwork>> {
+        match self.build_unsigned() {
+            Ok(tx) => {
+                signer.sign_transaction(tx).await.map_err(|e| e.into())
+            },
+            Err(e) => {
+                todo!() // todo: handle (why is this different err than build_unsigned?)
+            }, 
+        }
     }
+
+    fn access_list(&self) -> Option<&AccessList> {
+        None
+    }
+
+    fn set_access_list(&mut self, _access_list: AccessList) {
+        panic!("Cannot set access list for confidential compute request");
+    }
+
+    fn blob_sidecar(&self) -> Option<&consensus::BlobTransactionSidecar> {
+        None
+    }
+
+    // todo: implement types
+    fn complete_type(&self, ty: SuaveTxType) -> Result<(), Vec<&'static str>> {
+        unimplemented!("complete_type")
+    }
+
+    fn can_submit(&self) -> bool {
+        true
+    }
+
+    fn can_build(&self) -> bool {
+        true
+    }
+
+    fn output_tx_type(&self) -> SuaveTxType {
+        panic!("Not supported")
+    }
+
+    fn output_tx_type_checked(&self) -> Option<SuaveTxType> {
+        panic!("Not supported")
+    }
+
+    fn prep_for_submission(&mut self) {
+        unimplemented!("prep_for_submission")
+    }
+
 
 
 }

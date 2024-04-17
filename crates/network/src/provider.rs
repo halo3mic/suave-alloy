@@ -1,14 +1,15 @@
+use reqwest::Client as ReqwestClient;
 use std::str::FromStr;
-
 use alloy::{
-    providers::{Provider, ProviderBuilder, RootProvider, layers::SignerProvider},
+    providers::{
+        Provider, ProviderBuilder, RootProvider,
+        fillers::{FillProvider, TxFiller}, 
+    },
     transports::{http::Http, TransportResult},
     rpc::client::ClientRef,
     primitives::Address,
 };
-use reqwest::Client as ReqwestClient;
 use super::network::SuaveNetwork;
-use super::signer::SuaveSigner;
 
 
 #[derive(Clone)]
@@ -19,8 +20,8 @@ pub struct SuaveProvider {
 impl SuaveProvider {
 
     pub fn new(url: url::Url) -> Self {
-        let root_provider = ProviderBuilder::<_, SuaveNetwork>::default()
-            .on_reqwest_http(url).expect("Failed to root provider for SuaveProvider");
+        let root_provider = ProviderBuilder::<_, _, SuaveNetwork>::default()
+            .on_http(url).expect("Failed to root provider for SuaveProvider");
         Self { root_provider }
     }
 
@@ -56,17 +57,22 @@ impl FromStr for SuaveProvider {
 
 }
 
-pub trait SuaveSignerProvider {
+pub trait SuaveFillProviderExt {
     fn kettle_address(&self) -> impl std::future::Future<Output = TransportResult<Address>> + Send;
 }
 
-impl SuaveSignerProvider for SignerProvider<Http<ReqwestClient>, SuaveProvider, SuaveSigner, SuaveNetwork> {
+// todo: optimize for wasm
+// #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+// #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<S> SuaveFillProviderExt for FillProvider<S, SuaveProvider, Http<reqwest::Client>, SuaveNetwork> 
+    where S: TxFiller<SuaveNetwork>
+{
     async fn kettle_address(&self) -> TransportResult<Address> {
         kettle_address(self.client()).await
     }
 }
 
-async fn kettle_address<'a>(client: ClientRef<'a ,Http<reqwest::Client>>) -> TransportResult<Address> {
+async fn kettle_address<'a>(client: ClientRef<'a , Http<reqwest::Client>>) -> TransportResult<Address> {
     client.request(String::from("eth_kettleAddress"), ()).await
         .map(|ks: Vec<Address>| ks[0])
 }
