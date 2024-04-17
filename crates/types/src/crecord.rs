@@ -30,6 +30,7 @@ pub struct ConfidentialComputeRecord {
 }
 
 impl ConfidentialComputeRecord {
+    pub const TYPE: u8 = 0x42;
 
     pub fn from_tx_request(
         tx_req: TransactionRequest, 

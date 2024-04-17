@@ -9,10 +9,6 @@ use alloy::{
 use super::crecord::{ConfidentialComputeRecord, CRecordRLP};
 
 
-const CONFIDENTIAL_COMPUTE_RECORD_TYPE: u8 = 0x42;
-const CONFIDENTIAL_COMPUTE_REQUEST_TYPE: u8 = 0x43;
-
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfidentialComputeRequest {
@@ -21,6 +17,7 @@ pub struct ConfidentialComputeRequest {
 }
 
 impl ConfidentialComputeRequest {
+    pub const TYPE: u8 = 0x43;
 
     pub fn new(
         mut confidential_compute_record: ConfidentialComputeRecord, 
@@ -43,7 +40,7 @@ impl ConfidentialComputeRequest {
             return Err(eyre!("Missing fields"));
         }
         let rlp_encoded = encode_with_prefix(
-            CONFIDENTIAL_COMPUTE_REQUEST_TYPE, 
+            ConfidentialComputeRequest::TYPE, 
             CRequestRLP::from(self)
         );
         
@@ -90,7 +87,7 @@ impl ConfidentialComputeRequest {
 
     fn hash(&self) -> FixedBytes<32> {
         let rlp_encoded = encode_with_prefix(
-            CONFIDENTIAL_COMPUTE_RECORD_TYPE, 
+            ConfidentialComputeRecord::TYPE, 
             CRequestHashParams::from(self)
         );
         let hash = primitives::keccak256(&rlp_encoded);
@@ -138,7 +135,7 @@ impl SignableTransaction<Signature> for ConfidentialComputeRequest {
     }
 
     fn encode_for_signing(&self, out: &mut dyn alloy_rlp::BufMut) {
-        out.put_u8(CONFIDENTIAL_COMPUTE_RECORD_TYPE);
+        out.put_u8(ConfidentialComputeRecord::TYPE);
         CRequestHashParams::from(self).encode(out);
     }
 
@@ -157,7 +154,7 @@ impl SignableTransaction<Signature> for ConfidentialComputeRequest {
 impl Decodable2718 for ConfidentialComputeRequest {
     fn typed_decode(ty: u8, buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         match ty {
-            CONFIDENTIAL_COMPUTE_REQUEST_TYPE => {
+            ConfidentialComputeRequest::TYPE => {
                 let crequest_prerlp = CRequestRLP::decode(buf)?;
                 Ok(crequest_prerlp.into())
             }
@@ -172,7 +169,7 @@ impl Decodable2718 for ConfidentialComputeRequest {
 
 impl Encodable2718 for ConfidentialComputeRequest {
     fn type_flag(&self) -> Option<u8> {
-        Some(CONFIDENTIAL_COMPUTE_REQUEST_TYPE)
+        Some(ConfidentialComputeRequest::TYPE)
     }
 
     fn encode_2718_len(&self) -> usize {
@@ -180,7 +177,7 @@ impl Encodable2718 for ConfidentialComputeRequest {
     }
 
     fn encode_2718(&self, out: &mut dyn alloy_rlp::BufMut) {
-        out.put_u8(CONFIDENTIAL_COMPUTE_REQUEST_TYPE);
+        out.put_u8(ConfidentialComputeRequest::TYPE);
         CRequestRLP::from(self).encode(out);
     }
 }
@@ -334,7 +331,7 @@ mod tests {
             value: U256::ZERO,
             input,
         };
-        let encoded = encode_with_prefix(CONFIDENTIAL_COMPUTE_RECORD_TYPE, hash_params);
+        let encoded = encode_with_prefix(ConfidentialComputeRecord::TYPE, hash_params);
         let hash = primitives::keccak256(&encoded);
 
         let expected_hash = FixedBytes::from_str("0x72ffab40c5116931200ca87052360787559871297b3615a8c2ff28be738ac59f").unwrap();
