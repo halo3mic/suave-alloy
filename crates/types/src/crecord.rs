@@ -2,11 +2,15 @@ use serde::{Deserialize, Serialize};
 use alloy_rlp::{Encodable, RlpDecodable, RlpEncodable};
 use eyre::{Result, eyre};
 use alloy::{
-    primitives::{Address, Bytes, FixedBytes, U256, Signature}, 
+    primitives::{self, Address, Bytes, FixedBytes, U256, Signature}, 
     rpc::types::eth::TransactionRequest,
     serde as alloy_serde,
 };
 
+
+pub const EMPTY_BYTES_HASH: FixedBytes<32> = FixedBytes([
+    197,210,70,1,134,247,35,60,146,126,125,178,220,199,3,192,229,0,182,83,202,130,39,59,123,250,216,4,93,133,164,112
+]);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -14,9 +18,10 @@ pub struct ConfidentialComputeRecord {
     #[serde(with = "alloy_serde::num::u64_hex")]
     pub nonce: u64,
     pub to: Address,
-    #[serde(with = "alloy_serde::num::u64_hex")]
-    pub gas: u64,
-    pub gas_price: U256,
+    #[serde(with = "alloy_serde::num::u128_hex_or_decimal")]
+    pub gas: u128,
+    #[serde(with = "alloy_serde::num::u128_hex_or_decimal")]
+    pub gas_price: u128,
     pub value: U256,
     pub input: Bytes,
     pub kettle_address: Address,
@@ -29,24 +34,22 @@ pub struct ConfidentialComputeRecord {
 }
 
 impl ConfidentialComputeRecord {
+    pub const TYPE: u8 = 0x42;
 
     pub fn from_tx_request(
         tx_req: TransactionRequest, 
         kettle_address: Address, 
     ) -> Result<Self> {
-        let gas: u64 = tx_req.gas
-            .ok_or_else(|| eyre!("Missing gas field"))
-            .and_then(|g| g.try_into().map_err(|_| eyre!("Gas overflow")))?;
         let chain_id = tx_req.chain_id.ok_or(eyre!("Missing chain_id field"))?;
         Ok(Self {
             input: tx_req.input.input.unwrap_or(Bytes::new()),
-            gas_price: tx_req.gas_price.unwrap_or(U256::ZERO),
+            gas_price: tx_req.gas_price.unwrap_or(0),
             value: tx_req.value.unwrap_or(U256::ZERO),
             to: tx_req.to.unwrap_or(Address::ZERO),
             nonce: tx_req.nonce.unwrap_or(0),
             kettle_address,
             chain_id,
-            gas,
+            gas: tx_req.gas.expect("Missing gas field"),
             confidential_inputs_hash: None,
             signature: None,
         })
@@ -56,12 +59,16 @@ impl ConfidentialComputeRecord {
         self.confidential_inputs_hash = Some(confidential_inputs_hash);
     }
 
-    pub fn set_sig(&mut self, signature: Signature) {
-        self.signature = Some(signature);
+    pub fn set_confidential_inputs_hash_from_inputs(
+        &mut self, 
+        confidential_inputs: &Bytes
+    ) {
+        let ci_hash = primitives::keccak256(confidential_inputs);
+        self.set_confidential_inputs_hash(ci_hash);
     }
 
-    pub fn has_missing_field(&self) -> bool {
-        self.confidential_inputs_hash.is_none() || self.signature.is_none()
+    pub fn set_sig(&mut self, signature: Signature) {
+        self.signature = Some(signature);
     }
 
 }
@@ -70,8 +77,8 @@ impl ConfidentialComputeRecord {
 #[derive(Debug, RlpEncodable, RlpDecodable, PartialEq)]
 pub struct CRecordRLP {
     nonce: u64,
-    gas_price: U256,
-    gas: u64,
+    gas_price: u128,
+    gas: u128,
     to: Address,
     value: U256,
     input: Bytes,
@@ -106,9 +113,8 @@ impl From<&ConfidentialComputeRecord> for CRecordRLP {
     fn from(ccr: &ConfidentialComputeRecord) -> Self {
         let sig = ccr.signature
             .expect("Missing signature field");
-        let cinputs_hash = ccr.confidential_inputs_hash
-            .expect("Missing confidential_inputs_hash");
         let (v, r, s) = signature_to_vrs(sig);
+        let cinputs_hash = ccr.confidential_inputs_hash.unwrap_or(EMPTY_BYTES_HASH);
 
         Self {
             nonce: ccr.nonce,
@@ -171,9 +177,9 @@ mod tests {
         let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
         let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let tx = TransactionRequest::default()
-            .to(Some(to_add))
-            .gas_limit(U256::from(0x0f4240))
-            .with_gas_price(U256::from(0x3b9aca00))
+            .to(to_add)
+            .gas_limit(0x0f4240)
+            .with_gas_price(0x3b9aca00)
             .with_chain_id(chain_id)
             .with_nonce(0x22)
             .with_input(input)
@@ -182,7 +188,7 @@ mod tests {
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), kettle_address)?;
         assert_eq!(cc_record.kettle_address, kettle_address);
         assert_eq!(cc_record.to, to_add);
-        assert_eq!(U256::from(cc_record.gas), tx.gas.unwrap());
+        assert_eq!(Some(cc_record.gas), tx.gas);
         assert_eq!(cc_record.gas_price, tx.gas_price.unwrap());
         assert_eq!(cc_record.chain_id, chain_id);
         assert_eq!(cc_record.nonce, tx.nonce.unwrap());
@@ -199,14 +205,14 @@ mod tests {
         let chain_id = 0x067932;
         let kettle_address = Address::from_str("0x7d83e42b214b75bf1f3e57adc3415da573d97bff").unwrap();
         let tx = TransactionRequest::default()
-            .gas_limit(U256::from(0x0f4240))
+            .gas_limit(0x0f4240)
             .with_chain_id(chain_id);
         
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), kettle_address)?;
         assert_eq!(cc_record.kettle_address, kettle_address);
         assert_eq!(cc_record.to, Address::ZERO);
-        assert_eq!(U256::from(cc_record.gas), tx.gas.unwrap());
-        assert_eq!(cc_record.gas_price, U256::ZERO);
+        assert_eq!(Some(cc_record.gas), tx.gas);
+        assert_eq!(cc_record.gas_price, 0);
         assert_eq!(cc_record.chain_id, chain_id);
         assert_eq!(cc_record.nonce, 0);
         assert_eq!(cc_record.input, Bytes::new());
@@ -222,8 +228,7 @@ mod tests {
         let chain_id = 0x067932;
         let kettle_address = Address::from_str("0x7d83e42b214b75bf1f3e57adc3415da573d97bff").unwrap();
 
-        let tx = TransactionRequest::default()
-            .gas_limit(U256::from(0x0f4240));
+        let tx = TransactionRequest::default().gas_limit(0x0f4240);
         let cc_record_res = ConfidentialComputeRecord::from_tx_request(tx, kettle_address);
         assert!(cc_record_res.is_err());
 

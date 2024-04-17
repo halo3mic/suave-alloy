@@ -53,7 +53,7 @@ mod tests {
         assert_eq!(response_cc.confidential_compute_result, Bytes::from_str("0x0000000000000000000000000000000000000000000000000000000001ccb310").unwrap());
         assert_eq!(response_cc.request_record.chain_id, 0x1008c45);
         assert_eq!(response_cc.request_record.gas, 0xf4240);
-        assert_eq!(response_cc.request_record.gas_price, U256::from_str("0x8c9aca00").unwrap());
+        assert_eq!(response_cc.request_record.gas_price, 0x8c9aca00);
         assert_eq!(response_cc.request_record.nonce, 0x45);
         assert_eq!(response_cc.request_record.input, Bytes::from_str("0x50723553000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000074554485553445400").unwrap());
         assert_eq!(response_cc.request_record.kettle_address, Address::from_str("0x03493869959c866713c33669ca118e774a30a0e5").unwrap());

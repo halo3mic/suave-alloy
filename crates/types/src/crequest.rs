@@ -1,16 +1,12 @@
 use alloy_rlp::{Decodable, Encodable, RlpDecodable, RlpEncodable};
 use serde::{Deserialize, Serialize};
-use eyre::{Result, eyre};
+use eyre::Result;
 use alloy::{
     primitives::{self, Address, Bytes, FixedBytes, U256, ChainId, Signature, TxKind}, 
     consensus::{SignableTransaction, Signed, Transaction}, 
     eips::eip2718::{Decodable2718, Encodable2718}
 };
-use super::crecord::{ConfidentialComputeRecord, CRecordRLP};
-
-
-const CONFIDENTIAL_COMPUTE_RECORD_TYPE: u8 = 0x42;
-const CONFIDENTIAL_COMPUTE_REQUEST_TYPE: u8 = 0x43;
+use super::crecord::{ConfidentialComputeRecord, CRecordRLP, EMPTY_BYTES_HASH};
 
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
@@ -21,16 +17,15 @@ pub struct ConfidentialComputeRequest {
 }
 
 impl ConfidentialComputeRequest {
+    pub const TYPE: u8 = 0x43;
 
     pub fn new(
         mut confidential_compute_record: ConfidentialComputeRecord, 
         confidential_inputs: Option<Bytes>,
     ) -> Self {
         let confidential_inputs = confidential_inputs.unwrap_or_default();
-        Self::set_confidential_inputs_hash(
-            &mut confidential_compute_record, 
-            &confidential_inputs
-        );
+        confidential_compute_record
+            .set_confidential_inputs_hash_from_inputs(&confidential_inputs);
         Self {
             confidential_compute_record,
             confidential_inputs,
@@ -39,11 +34,8 @@ impl ConfidentialComputeRequest {
 
     pub fn rlp_encode(&self) -> Result<Bytes> {
         let cc_record = &self.confidential_compute_record;
-        if cc_record.has_missing_field() {
-            return Err(eyre!("Missing fields"));
-        }
         let rlp_encoded = encode_with_prefix(
-            CONFIDENTIAL_COMPUTE_REQUEST_TYPE, 
+            ConfidentialComputeRequest::TYPE, 
             CRequestRLP::from(self)
         );
         
@@ -69,10 +61,8 @@ impl ConfidentialComputeRequest {
     }
 
     pub fn set_confidential_inputs(&mut self, confidential_inputs: Bytes) {
-        Self::set_confidential_inputs_hash(
-            &mut self.confidential_compute_record, 
-            &confidential_inputs
-        );
+        self.confidential_compute_record
+            .set_confidential_inputs_hash_from_inputs(&confidential_inputs);
         self.confidential_inputs = confidential_inputs;
     }
 
@@ -80,17 +70,9 @@ impl ConfidentialComputeRequest {
         self.confidential_inputs.clone()
     }
 
-    fn set_confidential_inputs_hash(
-        record: &mut ConfidentialComputeRecord, 
-        confidential_inputs: &Bytes
-    ) {
-        let ci_hash = primitives::keccak256(confidential_inputs);
-        record.set_confidential_inputs_hash(ci_hash);
-    }
-
     fn hash(&self) -> FixedBytes<32> {
         let rlp_encoded = encode_with_prefix(
-            CONFIDENTIAL_COMPUTE_RECORD_TYPE, 
+            ConfidentialComputeRecord::TYPE, 
             CRequestHashParams::from(self)
         );
         let hash = primitives::keccak256(&rlp_encoded);
@@ -121,11 +103,11 @@ impl Transaction for ConfidentialComputeRequest {
         self.confidential_compute_record.nonce
     }
 
-    fn gas_limit(&self) -> u64 {
-        self.confidential_compute_record.gas
+    fn gas_limit(&self) -> u128 {
+        self.confidential_compute_record.gas.into()
     }
 
-    fn gas_price(&self) -> Option<U256> {
+    fn gas_price(&self) -> Option<u128> {
         Some(self.confidential_compute_record.gas_price)
     }
 
@@ -138,7 +120,7 @@ impl SignableTransaction<Signature> for ConfidentialComputeRequest {
     }
 
     fn encode_for_signing(&self, out: &mut dyn alloy_rlp::BufMut) {
-        out.put_u8(CONFIDENTIAL_COMPUTE_RECORD_TYPE);
+        out.put_u8(ConfidentialComputeRecord::TYPE);
         CRequestHashParams::from(self).encode(out);
     }
 
@@ -157,7 +139,7 @@ impl SignableTransaction<Signature> for ConfidentialComputeRequest {
 impl Decodable2718 for ConfidentialComputeRequest {
     fn typed_decode(ty: u8, buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         match ty {
-            CONFIDENTIAL_COMPUTE_REQUEST_TYPE => {
+            ConfidentialComputeRequest::TYPE => {
                 let crequest_prerlp = CRequestRLP::decode(buf)?;
                 Ok(crequest_prerlp.into())
             }
@@ -172,7 +154,7 @@ impl Decodable2718 for ConfidentialComputeRequest {
 
 impl Encodable2718 for ConfidentialComputeRequest {
     fn type_flag(&self) -> Option<u8> {
-        Some(CONFIDENTIAL_COMPUTE_REQUEST_TYPE)
+        Some(ConfidentialComputeRequest::TYPE)
     }
 
     fn encode_2718_len(&self) -> usize {
@@ -180,7 +162,7 @@ impl Encodable2718 for ConfidentialComputeRequest {
     }
 
     fn encode_2718(&self, out: &mut dyn alloy_rlp::BufMut) {
-        out.put_u8(CONFIDENTIAL_COMPUTE_REQUEST_TYPE);
+        out.put_u8(ConfidentialComputeRequest::TYPE);
         CRequestRLP::from(self).encode(out);
     }
 }
@@ -224,8 +206,8 @@ struct CRequestHashParams {
     kettle_address: Address,
     confidential_inputs_hash: FixedBytes<32>,
     nonce: u64,
-    gas_price: U256,
-    gas: u64,
+    gas_price: u128,
+    gas: u128,
     to: Address,
     value: U256,
     input: Bytes,
@@ -247,8 +229,9 @@ impl CRequestHashParams {
 
 impl From<&ConfidentialComputeRequest> for CRequestHashParams {
     fn from(ccr: &ConfidentialComputeRequest) -> Self {
-        let cinputs_hash = ccr.confidential_compute_record.confidential_inputs_hash
-            .expect("Missing confidential_inputs_hash");
+        let cinputs_hash = ccr.confidential_compute_record
+            .confidential_inputs_hash
+            .unwrap_or(EMPTY_BYTES_HASH);
         Self {
             kettle_address: ccr.confidential_compute_record.kettle_address,
             confidential_inputs_hash: cinputs_hash,
@@ -290,9 +273,9 @@ mod tests {
         let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
         let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let tx = TransactionRequest::default()
-            .to(Some(to_add))
-            .gas_limit(U256::from(0x0f4240))
-            .with_gas_price(U256::from(0x3b9aca00))
+            .to(to_add)
+            .gas_limit(0x0f4240_u128)
+            .with_gas_price(0x3b9aca00_u128)
             .with_chain_id(chain_id)
             .with_nonce(0x22)
             .with_input(input);
@@ -328,13 +311,13 @@ mod tests {
             kettle_address,
             confidential_inputs_hash: cinputs_hash,
             nonce: 0x18,
-            gas_price: U256::from_str("0x3b9aca00").unwrap(),
+            gas_price: 0x3b9aca00,
             gas: 0x0f4240,
             to: to_add,
             value: U256::ZERO,
             input,
         };
-        let encoded = encode_with_prefix(CONFIDENTIAL_COMPUTE_RECORD_TYPE, hash_params);
+        let encoded = encode_with_prefix(ConfidentialComputeRecord::TYPE, hash_params);
         let hash = primitives::keccak256(&encoded);
 
         let expected_hash = FixedBytes::from_str("0x72ffab40c5116931200ca87052360787559871297b3615a8c2ff28be738ac59f").unwrap();
@@ -353,7 +336,7 @@ mod tests {
             kettle_address: kettle_address,
             confidential_inputs_hash: Some(cinputs_hash),
             nonce: 0x18,
-            gas_price: U256::from_str("0x3b9aca00").unwrap(),
+            gas_price: 0x3b9aca00,
             gas: 0x0f4240,
             to: to_add,
             value: U256::ZERO,
@@ -379,12 +362,12 @@ mod tests {
         let nonce = 0x22;
         let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
         let gas = 0x0f4240;
-        let gas_price = U256::from_str("0x3b9aca00").unwrap();
+        let gas_price = 0x3b9aca00;
         let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let chain_id = 0x067932;
         let tx = TransactionRequest::default()
-            .to(Some(to_add))
-            .gas_limit(U256::from(gas))
+            .to(to_add)
+            .gas_limit(gas)
             .with_gas_price(gas_price)
             .with_chain_id(chain_id)
             .with_nonce(nonce)
@@ -412,12 +395,12 @@ mod tests {
         let nonce = 0x22;
         let to_add = Address::from_str("0x780675d71ebe3d3ef05fae379063071147dd3aee").unwrap();
         let gas = 0x0f4240;
-        let gas_price = U256::from_str("0x3b9aca00").unwrap();
+        let gas_price = 0x3b9aca00;
         let input = Bytes::from_str("0x236eb5a70000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000780675d71ebe3d3ef05fae379063071147dd3aee0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let chain_id = 0x067932;
         let tx = TransactionRequest::default()
-            .to(Some(to_add))
-            .gas_limit(U256::from(gas))
+            .to(to_add)
+            .gas_limit(gas)
             .with_gas_price(gas_price)
             .with_chain_id(chain_id)
             .with_nonce(nonce)

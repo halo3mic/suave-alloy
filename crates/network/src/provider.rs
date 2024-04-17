@@ -1,72 +1,94 @@
+use reqwest::Client as ReqwestClient;
 use std::str::FromStr;
-
 use alloy::{
-    providers::{Provider, ProviderBuilder, RootProvider, layers::SignerProvider},
-    transports::{http::Http, TransportResult},
+    providers::{
+        Provider, ProviderBuilder, RootProvider,
+        fillers::{FillProvider, TxFiller}, 
+    },
+    transports::{http::Http, TransportResult, Transport},
     rpc::client::ClientRef,
     primitives::Address,
 };
-use reqwest::Client as ReqwestClient;
 use super::network::SuaveNetwork;
-use super::signer::SuaveSigner;
 
 
 #[derive(Clone)]
-pub struct SuaveProvider {
-    root_provider: RootProvider<Http<ReqwestClient>, SuaveNetwork>,
+pub struct SuaveProvider<T> 
+    where T: Transport + Clone
+{
+    root_provider: RootProvider<T, SuaveNetwork>,
 }
 
-impl SuaveProvider {
-
-    pub fn new(url: url::Url) -> Self {
-        let root_provider = ProviderBuilder::<_, SuaveNetwork>::default()
-            .on_reqwest_http(url).expect("Failed to root provider for SuaveProvider");
+impl<T> SuaveProvider<T> 
+    where T: Transport + Clone
+{
+    pub fn new(root_provider: RootProvider<T, SuaveNetwork>) -> Self {
         Self { root_provider }
     }
 
     pub async fn kettle_address(&self) -> TransportResult<Address> {
         kettle_address(self.client()).await
     }
+}
+
+type ReqwestHttp = Http<ReqwestClient>;
+
+impl SuaveProvider<ReqwestHttp> {
+
+    pub fn from_http(url: url::Url) -> SuaveProvider<ReqwestHttp> {
+        let root_provider = ProviderBuilder::<_, _, SuaveNetwork>::default()
+            .on_http(url).expect("Failed to root provider for SuaveProvider");
+        Self { root_provider }
+    }
 
 }
 
-impl Provider<Http<ReqwestClient>, SuaveNetwork> for SuaveProvider {
+impl<T> Provider<T, SuaveNetwork> for SuaveProvider<T> 
+    where T: Transport + Clone
+{
 
-    fn root(&self) -> &RootProvider<Http<ReqwestClient>, SuaveNetwork> { 
+    fn root(&self) -> &RootProvider<T, SuaveNetwork> { 
         &self.root_provider
     }
 
 }
 
-impl TryFrom<&str> for SuaveProvider {
+impl TryFrom<&str> for SuaveProvider<ReqwestHttp> {
     type Error = url::ParseError;
 
     fn try_from(url: &str) -> Result<Self, Self::Error> {
-        Ok(SuaveProvider::new(url.parse()?))
+        Ok(SuaveProvider::from_http(url.parse()?))
     }
 
 }
 
-impl FromStr for SuaveProvider {
+impl FromStr for SuaveProvider<ReqwestHttp> {
     type Err = url::ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(SuaveProvider::new(s.parse()?))
+        Ok(SuaveProvider::from_http(s.parse()?))
     }
 
 }
 
-pub trait SuaveSignerProvider {
+pub trait SuaveFillProviderExt {
     fn kettle_address(&self) -> impl std::future::Future<Output = TransportResult<Address>> + Send;
 }
 
-impl SuaveSignerProvider for SignerProvider<Http<ReqwestClient>, SuaveProvider, SuaveSigner, SuaveNetwork> {
+// todo: optimize for wasm
+// #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+// #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<S, T> SuaveFillProviderExt for FillProvider<S, SuaveProvider<T>, T, SuaveNetwork> 
+    where S: TxFiller<SuaveNetwork>, T: Transport + Clone
+{
     async fn kettle_address(&self) -> TransportResult<Address> {
         kettle_address(self.client()).await
     }
 }
 
-async fn kettle_address<'a>(client: ClientRef<'a ,Http<reqwest::Client>>) -> TransportResult<Address> {
+async fn kettle_address<'a, T>(client: ClientRef<'a , T>) -> TransportResult<Address> 
+    where T: Transport + Clone
+{
     client.request(String::from("eth_kettleAddress"), ()).await
         .map(|ks: Vec<Address>| ks[0])
 }
