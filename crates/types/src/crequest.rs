@@ -1,12 +1,12 @@
 use alloy_rlp::{Decodable, Encodable, RlpDecodable, RlpEncodable};
 use serde::{Deserialize, Serialize};
-use eyre::{Result, eyre};
+use eyre::Result;
 use alloy::{
     primitives::{self, Address, Bytes, FixedBytes, U256, ChainId, Signature, TxKind}, 
     consensus::{SignableTransaction, Signed, Transaction}, 
     eips::eip2718::{Decodable2718, Encodable2718}
 };
-use super::crecord::{ConfidentialComputeRecord, CRecordRLP};
+use super::crecord::{ConfidentialComputeRecord, CRecordRLP, EMPTY_BYTES_HASH};
 
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
@@ -24,10 +24,8 @@ impl ConfidentialComputeRequest {
         confidential_inputs: Option<Bytes>,
     ) -> Self {
         let confidential_inputs = confidential_inputs.unwrap_or_default();
-        Self::set_confidential_inputs_hash(
-            &mut confidential_compute_record, 
-            &confidential_inputs
-        );
+        confidential_compute_record
+            .set_confidential_inputs_hash_from_inputs(&confidential_inputs);
         Self {
             confidential_compute_record,
             confidential_inputs,
@@ -36,9 +34,6 @@ impl ConfidentialComputeRequest {
 
     pub fn rlp_encode(&self) -> Result<Bytes> {
         let cc_record = &self.confidential_compute_record;
-        if cc_record.has_missing_field() {
-            return Err(eyre!("Missing fields"));
-        }
         let rlp_encoded = encode_with_prefix(
             ConfidentialComputeRequest::TYPE, 
             CRequestRLP::from(self)
@@ -66,23 +61,13 @@ impl ConfidentialComputeRequest {
     }
 
     pub fn set_confidential_inputs(&mut self, confidential_inputs: Bytes) {
-        Self::set_confidential_inputs_hash(
-            &mut self.confidential_compute_record, 
-            &confidential_inputs
-        );
+        self.confidential_compute_record
+            .set_confidential_inputs_hash_from_inputs(&confidential_inputs);
         self.confidential_inputs = confidential_inputs;
     }
 
     pub fn confidential_inputs(&self) -> Bytes {
         self.confidential_inputs.clone()
-    }
-
-    fn set_confidential_inputs_hash(
-        record: &mut ConfidentialComputeRecord, 
-        confidential_inputs: &Bytes
-    ) {
-        let ci_hash = primitives::keccak256(confidential_inputs);
-        record.set_confidential_inputs_hash(ci_hash);
     }
 
     fn hash(&self) -> FixedBytes<32> {
@@ -244,8 +229,9 @@ impl CRequestHashParams {
 
 impl From<&ConfidentialComputeRequest> for CRequestHashParams {
     fn from(ccr: &ConfidentialComputeRequest) -> Self {
-        let cinputs_hash = ccr.confidential_compute_record.confidential_inputs_hash
-            .expect("Missing confidential_inputs_hash");
+        let cinputs_hash = ccr.confidential_compute_record
+            .confidential_inputs_hash
+            .unwrap_or(EMPTY_BYTES_HASH);
         Self {
             kettle_address: ccr.confidential_compute_record.kettle_address,
             confidential_inputs_hash: cinputs_hash,

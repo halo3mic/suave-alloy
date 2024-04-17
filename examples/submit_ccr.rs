@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
         .with_chain_id(chain_id)
         .with_nonce(tx_count)
         .with_input(input)
-        .with_confidential_inputs(cinputs)
+        .with_confidential_inputs(cinputs) // No need to specify it if no confidential input
         .with_kettle_address(kettle);
     
     // Send CCR

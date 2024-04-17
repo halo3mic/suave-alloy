@@ -2,11 +2,15 @@ use serde::{Deserialize, Serialize};
 use alloy_rlp::{Encodable, RlpDecodable, RlpEncodable};
 use eyre::{Result, eyre};
 use alloy::{
-    primitives::{Address, Bytes, FixedBytes, U256, Signature}, 
+    primitives::{self, Address, Bytes, FixedBytes, U256, Signature}, 
     rpc::types::eth::TransactionRequest,
     serde as alloy_serde,
 };
 
+
+pub const EMPTY_BYTES_HASH: FixedBytes<32> = FixedBytes([
+    197,210,70,1,134,247,35,60,146,126,125,178,220,199,3,192,229,0,182,83,202,130,39,59,123,250,216,4,93,133,164,112
+]);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -55,12 +59,16 @@ impl ConfidentialComputeRecord {
         self.confidential_inputs_hash = Some(confidential_inputs_hash);
     }
 
-    pub fn set_sig(&mut self, signature: Signature) {
-        self.signature = Some(signature);
+    pub fn set_confidential_inputs_hash_from_inputs(
+        &mut self, 
+        confidential_inputs: &Bytes
+    ) {
+        let ci_hash = primitives::keccak256(confidential_inputs);
+        self.set_confidential_inputs_hash(ci_hash);
     }
 
-    pub fn has_missing_field(&self) -> bool {
-        self.confidential_inputs_hash.is_none() || self.signature.is_none()
+    pub fn set_sig(&mut self, signature: Signature) {
+        self.signature = Some(signature);
     }
 
 }
@@ -105,9 +113,8 @@ impl From<&ConfidentialComputeRecord> for CRecordRLP {
     fn from(ccr: &ConfidentialComputeRecord) -> Self {
         let sig = ccr.signature
             .expect("Missing signature field");
-        let cinputs_hash = ccr.confidential_inputs_hash
-            .expect("Missing confidential_inputs_hash");
         let (v, r, s) = signature_to_vrs(sig);
+        let cinputs_hash = ccr.confidential_inputs_hash.unwrap_or(EMPTY_BYTES_HASH);
 
         Self {
             nonce: ccr.nonce,
