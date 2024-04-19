@@ -1,7 +1,10 @@
 use std::str::FromStr;
 use eyre::{Result, OptionExt};
 use alloy::{
-    network::TransactionBuilder, primitives::{Address, Bytes, B256, U256}, providers::{fillers::ChainIdFiller, Provider, ProviderBuilder}, rpc::types::eth::BlockId, signers::wallet::LocalWallet
+    network::TransactionBuilder, 
+    primitives::{Address, Bytes, B256, U256}, 
+    providers::{Provider, ProviderBuilder}, 
+    signers::wallet::LocalWallet
 };
 use suave_alloy::{
     network::{SuaveNetwork, SuaveProvider, SuaveSigner, SuaveFillProviderExt}, 
@@ -14,9 +17,8 @@ use suave_alloy::{
 async fn main() -> Result<()> {
     // Args
     let input = Bytes::from_str("0x50723553000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000074554485553445400").unwrap();
-    let wallet_address = Address::from_str("0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A").unwrap();
     let to_add = Address::from_str("0xc803334c79650708Daf3a3462AC4B48296b1352a").unwrap();
-    let gas_price = 0x3c9aca00;
+    let gas_price = 0x4c9aca00;
     let cinputs = Bytes::new();
     let gas = 0x0f4240; // Estimate gas doesn't work well with MEVM
 
@@ -24,17 +26,15 @@ async fn main() -> Result<()> {
     let rpc_url = "https://rpc.rigil.suave.flashbots.net";
     let wallet: LocalWallet = "0x1111111111111111111111111111111111111111111111111111111111111111".parse()?; 
     let provider = ProviderBuilder::<_, _, SuaveNetwork>::default()
-        .filler(ChainIdFiller::default())
+        .with_recommended_fillers()
         .signer(SuaveSigner::new(wallet))
         .on_provider(SuaveProvider::try_from(rpc_url)?);
 
     // Get nonce and kettle address
-    let tx_count: u64 = provider.get_transaction_count(wallet_address, BlockId::latest()).await?;
     let kettle = provider.kettle_address().await?;
 
     // Create a confidential-compute-request 
     let ccr = ConfidentialComputeRequest::default()
-        .with_nonce(tx_count) // Doesn't get filled as signer add unknown
         .with_to(Some(to_add).into())
         .with_gas_price(gas_price)
         .with_gas_limit(gas)

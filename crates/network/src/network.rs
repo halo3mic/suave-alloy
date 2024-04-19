@@ -221,7 +221,7 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
         // todo: this check goes into crecord
         self.confidential_compute_record.nonce.is_some() && 
         self.confidential_compute_record.gas.is_some() &&
-        // self.confidential_compute_record.from.is_some() &&
+        self.confidential_compute_record.from.is_some() &&
         self.confidential_compute_record.chain_id.is_some()
     }
 

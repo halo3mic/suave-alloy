@@ -1,10 +1,9 @@
 use std::str::FromStr;
 use eyre::Result;
 use alloy::{
-    providers::{Provider, ProviderBuilder, fillers::ChainIdFiller},
+    providers::{Provider, ProviderBuilder},
     primitives::{Address, Bytes}, 
     signers::wallet::LocalWallet,
-    rpc::types::eth::BlockId,
     sol,
 };
 use suave_alloy::prelude::*;
@@ -25,14 +24,14 @@ async fn main() -> Result<()> {
     let rpc_url = "https://rpc.rigil.suave.flashbots.net";
     let pk = "0x1111111111111111111111111111111111111111111111111111111111111111";
     let gas = 0x0f4240; // Estimate gas doesn't work well with MEVM
+    let gas_price = 0x4c9aca00;
 
     // Create SUAVE signer-provider
     let wallet: LocalWallet = pk.parse()?;    
     let provider = ProviderBuilder::<_, _, SuaveNetwork>::default()
-        .filler(ChainIdFiller::default())
+        .with_recommended_fillers()
         .signer(SuaveSigner::new(wallet.clone()))
         .on_provider(SuaveProvider::try_from(rpc_url)?);
-    let nonce = provider.get_transaction_count(wallet.address(), BlockId::latest()).await?;
 
     // Create call builder
     let contract = BinanceOracle::new(boracle_add, &provider);
@@ -40,8 +39,7 @@ async fn main() -> Result<()> {
         .with_kettle_address(provider.kettle_address().await?)
         .with_cinput(Bytes::new())
         .gas(gas)
-        .gas_price(0x2f4240)
-        .nonce(nonce);
+        .gas_price(gas_price);
 
     // Send tx
     let pending_tx = call_builder.send().await?;

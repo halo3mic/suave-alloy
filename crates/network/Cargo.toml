@@ -9,7 +9,7 @@ license.workspace = true
 [dependencies]
 suave-alloy-types = { workspace = true, default-features = false }
 
-alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
+alloy = { path = "../../../../../alloy/crates/alloy", features = [
     "network",
     "providers",
     "provider-http",
@@ -26,7 +26,7 @@ async-trait.workspace = true
 [dev-dependencies]
 tokio.workspace = true
 eyre.workspace = true
-alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
+alloy = { path = "../../../../../alloy/crates/alloy", features = [
     "signer-wallet"
 ] }
 
