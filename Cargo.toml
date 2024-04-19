@@ -17,7 +17,7 @@ suave-alloy-network = { path = "crates/network" }
 suave-alloy-types = { path = "crates/types" }
 suave-alloy = { path = "crates/suave-alloy" }
 
-alloy = { git = "https://github.com/halo3mic/alloy", branch = "dev2", features = [
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
     "contract",
     "network",
     "providers",
