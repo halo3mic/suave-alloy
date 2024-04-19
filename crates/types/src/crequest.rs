@@ -1,6 +1,6 @@
 use alloy_rlp::{Decodable, Encodable, RlpDecodable, RlpEncodable};
 use serde::{Deserialize, Serialize};
-use eyre::Result;
+use eyre::{eyre, Result};
 use alloy::{
     primitives::{self, Address, Bytes, FixedBytes, U256, ChainId, Signature, TxKind}, 
     consensus::{SignableTransaction, Signed, Transaction}, 
@@ -33,10 +33,9 @@ impl ConfidentialComputeRequest {
     }
 
     pub fn rlp_encode(&self) -> Result<Bytes> {
-        let cc_record = &self.confidential_compute_record;
         let rlp_encoded = encode_with_prefix(
             ConfidentialComputeRequest::TYPE, 
-            CRequestRLP::from(self)
+            CRequestRLP::try_from(self)?
         );
         
         Ok(rlp_encoded)
@@ -73,7 +72,7 @@ impl ConfidentialComputeRequest {
     fn hash(&self) -> FixedBytes<32> {
         let rlp_encoded = encode_with_prefix(
             ConfidentialComputeRecord::TYPE, 
-            CRequestHashParams::from(self)
+            CRequestHashParams::try_from(self).unwrap()
         );
         let hash = primitives::keccak256(&rlp_encoded);
         hash
@@ -96,19 +95,19 @@ impl Transaction for ConfidentialComputeRequest {
     }
 
     fn chain_id(&self) -> Option<ChainId> {
-        Some(self.confidential_compute_record.chain_id)
+        self.confidential_compute_record.chain_id
     }
 
     fn nonce(&self) -> u64 {
-        self.confidential_compute_record.nonce
+        self.confidential_compute_record.nonce.unwrap_or_default() // todo: temp solution, this cant be default
     }
 
     fn gas_limit(&self) -> u128 {
-        self.confidential_compute_record.gas.into()
+        self.confidential_compute_record.gas.unwrap_or_default() // todo: temp solution, this cant be default
     }
 
     fn gas_price(&self) -> Option<u128> {
-        Some(self.confidential_compute_record.gas_price)
+        self.confidential_compute_record.gas_price
     }
 
 }
@@ -116,17 +115,17 @@ impl Transaction for ConfidentialComputeRequest {
 impl SignableTransaction<Signature> for ConfidentialComputeRequest {
 
     fn set_chain_id(&mut self, chain_id: ChainId) {
-        self.confidential_compute_record.chain_id = chain_id;
+        self.confidential_compute_record.chain_id = Some(chain_id);
     }
 
     fn encode_for_signing(&self, out: &mut dyn alloy_rlp::BufMut) {
         out.put_u8(ConfidentialComputeRecord::TYPE);
-        CRequestHashParams::from(self).encode(out);
+        CRequestHashParams::try_from(self).unwrap().encode(out);
     }
 
     fn payload_len_for_signature(&self) -> usize {
-        let chain_id = self.confidential_compute_record.chain_id as usize;
-        CRequestHashParams::from(self).fields_len() + chain_id + 2
+        let chain_id = self.confidential_compute_record.chain_id.expect("Chain ID not set");
+        CRequestHashParams::try_from(self).unwrap().fields_len() + chain_id as usize + 2
     }
 
     fn into_signed(self, signature: Signature) -> Signed<Self, Signature> where Self: Sized {
@@ -158,12 +157,12 @@ impl Encodable2718 for ConfidentialComputeRequest {
     }
 
     fn encode_2718_len(&self) -> usize {
-        CRequestRLP::from(self).fields_len()
+        CRequestRLP::try_from(self).unwrap().fields_len()
     }
 
     fn encode_2718(&self, out: &mut dyn alloy_rlp::BufMut) {
         out.put_u8(ConfidentialComputeRequest::TYPE);
-        CRequestRLP::from(self).encode(out);
+        CRequestRLP::try_from(self).unwrap().encode(out);
     }
 }
 
@@ -182,12 +181,14 @@ impl CRequestRLP {
     }
 }
 
-impl From<&ConfidentialComputeRequest> for CRequestRLP {
-    fn from(ccr: &ConfidentialComputeRequest) -> Self {
-        Self {
-            request: (&ccr.confidential_compute_record).into(),
+impl TryFrom<&ConfidentialComputeRequest> for CRequestRLP {
+    type Error = eyre::Error;
+
+    fn try_from(ccr: &ConfidentialComputeRequest) -> Result<Self> {
+        Ok(Self {
+            request: (&ccr.confidential_compute_record).try_into()?,
             confidential_inputs: ccr.confidential_inputs.clone(),
-        }
+        })
     }
 }
 
@@ -227,21 +228,23 @@ impl CRequestHashParams {
     }
 }
 
-impl From<&ConfidentialComputeRequest> for CRequestHashParams {
-    fn from(ccr: &ConfidentialComputeRequest) -> Self {
+impl TryFrom<&ConfidentialComputeRequest> for CRequestHashParams {
+    type Error = eyre::Error;
+
+    fn try_from(ccr: &ConfidentialComputeRequest) -> Result<Self> {
         let cinputs_hash = ccr.confidential_compute_record
             .confidential_inputs_hash
             .unwrap_or(EMPTY_BYTES_HASH);
-        Self {
+        Ok(Self {
             kettle_address: ccr.confidential_compute_record.kettle_address,
             confidential_inputs_hash: cinputs_hash,
-            nonce: ccr.confidential_compute_record.nonce,
-            gas_price: ccr.confidential_compute_record.gas_price,
-            gas: ccr.confidential_compute_record.gas,
+            nonce: ccr.confidential_compute_record.nonce.ok_or_else(|| eyre!("Missing nonce field"))?,
+            gas_price: ccr.confidential_compute_record.gas_price.ok_or_else(|| eyre!("Missing gas price field"))?,
+            gas: ccr.confidential_compute_record.gas.ok_or_else(|| eyre!("Missing gas field"))?,
             to: ccr.confidential_compute_record.to,
             value: ccr.confidential_compute_record.value,
             input: ccr.confidential_compute_record.input.clone(),
-        }
+        })
     }
 }
 
@@ -335,14 +338,15 @@ mod tests {
         let crecord = ConfidentialComputeRecord {
             kettle_address: kettle_address,
             confidential_inputs_hash: Some(cinputs_hash),
-            nonce: 0x18,
-            gas_price: 0x3b9aca00,
-            gas: 0x0f4240,
+            nonce: Some(0x18),
+            gas_price: Some(0x3b9aca00),
+            gas: Some(0x0f4240),
             to: to_add,
             value: U256::ZERO,
             input,
             signature: None,
-            chain_id: 1
+            chain_id: Some(1),
+            from: None,
         };
         let crequest = ConfidentialComputeRequest {
             confidential_compute_record: crecord,

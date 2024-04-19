@@ -1,11 +1,7 @@
 use std::str::FromStr;
 use eyre::{Result, OptionExt};
 use alloy::{
-    primitives::{Address, Bytes, B256, U256}, 
-    providers::{Provider, ProviderBuilder}, 
-    signers::wallet::LocalWallet, 
-    network::TransactionBuilder, 
-    rpc::types::eth::BlockId,
+    network::TransactionBuilder, primitives::{Address, Bytes, B256, U256}, providers::{fillers::ChainIdFiller, Provider, ProviderBuilder}, rpc::types::eth::BlockId, signers::wallet::LocalWallet
 };
 use suave_alloy::{
     network::{SuaveNetwork, SuaveProvider, SuaveSigner, SuaveFillProviderExt}, 
@@ -22,13 +18,13 @@ async fn main() -> Result<()> {
     let to_add = Address::from_str("0xc803334c79650708Daf3a3462AC4B48296b1352a").unwrap();
     let gas_price = 0x3c9aca00;
     let cinputs = Bytes::new();
-    let chain_id = 0x1008c45;
-    let gas = 0x0f4240;
+    let gas = 0x0f4240; // Estimate gas doesn't work well with MEVM
 
     // Create SUAVE signer-provider
     let rpc_url = "https://rpc.rigil.suave.flashbots.net";
     let wallet: LocalWallet = "0x1111111111111111111111111111111111111111111111111111111111111111".parse()?; 
     let provider = ProviderBuilder::<_, _, SuaveNetwork>::default()
+        .filler(ChainIdFiller::default())
         .signer(SuaveSigner::new(wallet))
         .on_provider(SuaveProvider::try_from(rpc_url)?);
 
@@ -38,11 +34,10 @@ async fn main() -> Result<()> {
 
     // Create a confidential-compute-request 
     let ccr = ConfidentialComputeRequest::default()
-        .with_gas_limit(gas)
+        .with_nonce(tx_count) // Doesn't get filled as signer add unknown
         .with_to(Some(to_add).into())
         .with_gas_price(gas_price)
-        .with_chain_id(chain_id)
-        .with_nonce(tx_count)
+        .with_gas_limit(gas)
         .with_input(input)
         .with_confidential_inputs(cinputs) // No need to specify it if no confidential input
         .with_kettle_address(kettle);

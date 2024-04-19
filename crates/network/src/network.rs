@@ -76,19 +76,19 @@ type SuaveBuildResult<T> = BuildResult<T, SuaveNetwork>;
 impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
 
     fn chain_id(&self) -> Option<ChainId> {
-        Some(self.confidential_compute_record.chain_id)
+        self.confidential_compute_record.chain_id
     }
 
     fn set_chain_id(&mut self, chain_id: ChainId) {
-        self.confidential_compute_record.chain_id = chain_id;
+        self.confidential_compute_record.chain_id = Some(chain_id);
     }
 
     fn nonce(&self) -> Option<u64> {
-        Some(self.confidential_compute_record.nonce)
+        self.confidential_compute_record.nonce
     }
 
     fn set_nonce(&mut self, nonce: u64) {
-        self.confidential_compute_record.nonce = nonce;
+        self.confidential_compute_record.nonce = Some(nonce);
     }
 
     fn input(&self) -> Option<&Bytes> {
@@ -100,14 +100,16 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     }
 
     fn from(&self) -> Option<Address> {
-        self.confidential_compute_record.signature.map(|sig| {
-            let prehash = self.signature_hash();
-            sig.recover_address_from_prehash(&B256::from(prehash)).expect("Invalid signature")
-        })
+        self.confidential_compute_record.from
+        // self.confidential_compute_record.signature.map(|sig| {
+        //     let prehash = self.signature_hash();
+        //     sig.recover_address_from_prehash(&B256::from(prehash)).expect("Invalid signature")
+        // })
     }
 
-    fn set_from(&mut self, _from: Address) {
-        panic!("Cannot set from address for confidential compute request");
+    fn set_from(&mut self, from: Address) {
+        // panic!("Cannot set from address for confidential compute request");
+        self.confidential_compute_record.from = Some(from);
     }
 
     fn to(&self) -> Option<TxKind> {
@@ -131,11 +133,11 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     }
 
     fn gas_price(&self) -> Option<u128> {
-        Some(self.confidential_compute_record.gas_price)
+        self.confidential_compute_record.gas_price
     }
 
     fn set_gas_price(&mut self, gas_price: u128) {
-        self.confidential_compute_record.gas_price = gas_price;
+        self.confidential_compute_record.gas_price = Some(gas_price);
     }
 
     fn max_fee_per_gas(&self) -> Option<u128> {
@@ -163,7 +165,7 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     }
 
     fn gas_limit(&self) -> Option<u128> {
-        Some(self.confidential_compute_record.gas)
+        self.confidential_compute_record.gas
     }
 
     fn set_gas_limit(&mut self, gas_limit: u128) {
@@ -175,8 +177,8 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
         panic!("Cannot set blob sidecar for confidential compute request");
     }
 
-    // todo: have a different struct for built and built-unsigned?
     fn build_unsigned(self) -> SuaveBuildResult<<SuaveNetwork as Network>::UnsignedTx>{
+        // todo: Instead of returning CCR with optional fields, return a struct with required fields
         Ok(self)
     }
 
@@ -216,7 +218,11 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     }
 
     fn can_build(&self) -> bool {
-        true
+        // todo: this check goes into crecord
+        self.confidential_compute_record.nonce.is_some() && 
+        self.confidential_compute_record.gas.is_some() &&
+        // self.confidential_compute_record.from.is_some() &&
+        self.confidential_compute_record.chain_id.is_some()
     }
 
     fn output_tx_type(&self) -> SuaveTxType {
@@ -230,7 +236,5 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     fn prep_for_submission(&mut self) {
         unimplemented!("prep_for_submission")
     }
-
-
 
 }

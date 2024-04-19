@@ -1,10 +1,10 @@
 use std::str::FromStr;
 use eyre::Result;
 use alloy::{
+    providers::{Provider, ProviderBuilder, fillers::ChainIdFiller},
     primitives::{Address, Bytes}, 
-    providers::{Provider, ProviderBuilder},
-    rpc::types::eth::BlockId,
     signers::wallet::LocalWallet,
+    rpc::types::eth::BlockId,
     sol,
 };
 use suave_alloy::prelude::*;
@@ -24,11 +24,12 @@ async fn main() -> Result<()> {
     let ticker = String::from("ETHUSDT");
     let rpc_url = "https://rpc.rigil.suave.flashbots.net";
     let pk = "0x1111111111111111111111111111111111111111111111111111111111111111";
+    let gas = 0x0f4240; // Estimate gas doesn't work well with MEVM
 
     // Create SUAVE signer-provider
     let wallet: LocalWallet = pk.parse()?;    
     let provider = ProviderBuilder::<_, _, SuaveNetwork>::default()
-        .with_recommended_fillers()
+        .filler(ChainIdFiller::default())
         .signer(SuaveSigner::new(wallet.clone()))
         .on_provider(SuaveProvider::try_from(rpc_url)?);
     let nonce = provider.get_transaction_count(wallet.address(), BlockId::latest()).await?;
@@ -38,8 +39,7 @@ async fn main() -> Result<()> {
     let call_builder = contract.queryLatestPrice(ticker)
         .with_kettle_address(provider.kettle_address().await?)
         .with_cinput(Bytes::new())
-        .with_chain_id(0x1008c45)
-        .gas(0x0f4240) // todo: this should work with fillers but it doesn't for some reason
+        .gas(gas)
         .gas_price(0x2f4240)
         .nonce(nonce);
 
