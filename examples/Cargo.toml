@@ -29,3 +29,7 @@ eyre.workspace = true
 [[example]]
 name = "submit_ccr"
 path = "submit_ccr.rs"
+
+[[example]]
+name = "callbuilder_ccr"
+path = "callbuilder_ccr.rs"
