@@ -1,7 +1,9 @@
 mod network;
 mod signer;
 mod provider;
+mod contract;
 
 pub use network::SuaveNetwork;
 pub use signer::SuaveSigner;
 pub use provider::{SuaveProvider, SuaveFillProviderExt};
+pub use contract::SuaveCallBuilderExt;

@@ -49,6 +49,7 @@ impl SuaveSigner {
             .ok_or(SignerError::other("unknown signer"))?
             .sign_transaction(tx).await.map(|sig| {
                 tx.confidential_compute_record.set_sig(sig);
+                tx.confidential_compute_record.from = Some(sender);
                 tx.clone()
             })
     }

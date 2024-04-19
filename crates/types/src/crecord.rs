@@ -15,22 +15,24 @@ pub const EMPTY_BYTES_HASH: FixedBytes<32> = FixedBytes([
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfidentialComputeRecord {
-    #[serde(with = "alloy_serde::num::u64_hex")]
-    pub nonce: u64,
+    #[serde(with = "alloy_serde::num::u64_hex_opt")]
+    pub nonce: Option<u64>,
     pub to: Address,
-    #[serde(with = "alloy_serde::num::u128_hex_or_decimal")]
-    pub gas: u128,
-    #[serde(with = "alloy_serde::num::u128_hex_or_decimal")]
-    pub gas_price: u128,
+    #[serde(with = "alloy_serde::num::u128_hex_or_decimal_opt")]
+    pub gas: Option<u128>,
+    #[serde(with = "alloy_serde::num::u128_hex_or_decimal_opt")]
+    pub gas_price: Option<u128>,
     pub value: U256,
     pub input: Bytes,
     pub kettle_address: Address,
-    #[serde(with = "alloy_serde::num::u64_hex")]
-    pub chain_id: u64,
+    #[serde(with = "alloy_serde::num::u64_hex_opt")]
+    pub chain_id: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub confidential_inputs_hash: Option<FixedBytes<32>>,
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub signature: Option<Signature>,
+    #[serde(skip)]
+    pub from: Option<Address>,
 }
 
 impl ConfidentialComputeRecord {
@@ -40,18 +42,18 @@ impl ConfidentialComputeRecord {
         tx_req: TransactionRequest, 
         kettle_address: Address, 
     ) -> Result<Self> {
-        let chain_id = tx_req.chain_id.ok_or(eyre!("Missing chain_id field"))?;
         Ok(Self {
             input: tx_req.input.input.unwrap_or(Bytes::new()),
-            gas_price: tx_req.gas_price.unwrap_or(0),
+            gas_price: tx_req.gas_price,
             value: tx_req.value.unwrap_or(U256::ZERO),
             to: tx_req.to.unwrap_or(Address::ZERO),
-            nonce: tx_req.nonce.unwrap_or(0),
+            nonce: tx_req.nonce,
             kettle_address,
-            chain_id,
-            gas: tx_req.gas.expect("Missing gas field"),
+            chain_id: tx_req.chain_id,
+            gas: tx_req.gas,
             confidential_inputs_hash: None,
             signature: None,
+            from: None,
         })
     }
 
@@ -109,25 +111,27 @@ impl CRecordRLP {
     }
 }
 
-impl From<&ConfidentialComputeRecord> for CRecordRLP {
-    fn from(ccr: &ConfidentialComputeRecord) -> Self {
+impl TryFrom<&ConfidentialComputeRecord> for CRecordRLP {
+    type Error = eyre::Error; // todo: implement custom errors
+
+    fn try_from(ccr: &ConfidentialComputeRecord) -> Result<Self> {
         let sig = ccr.signature
             .expect("Missing signature field");
         let (v, r, s) = signature_to_vrs(sig);
         let cinputs_hash = ccr.confidential_inputs_hash.unwrap_or(EMPTY_BYTES_HASH);
 
-        Self {
-            nonce: ccr.nonce,
-            gas_price: ccr.gas_price,
-            gas: ccr.gas,
+        Ok(Self {
+            nonce: ccr.nonce.ok_or_else(|| eyre!("Missing nonce field"))?,
+            gas_price: ccr.gas_price.ok_or_else(|| eyre!("Missing gas price field"))?,
+            gas: ccr.gas.ok_or_else(|| eyre!("Missing gas field"))?,
             to: ccr.to,
             value: ccr.value,
             input: ccr.input.clone(),
             kettle_address: ccr.kettle_address,
             confidential_inputs_hash: cinputs_hash,
-            chain_id: ccr.chain_id,
+            chain_id: ccr.chain_id.ok_or_else(|| eyre!("Missing chain id field"))?,
             v, r, s
-        }
+        })
     }
 }
 
@@ -136,16 +140,17 @@ impl Into<ConfidentialComputeRecord> for CRecordRLP {
         let sig = Signature::from_rs_and_parity(self.r, self.s, self.v as u64)
             .expect("Invalid signature");
         ConfidentialComputeRecord {
-            nonce: self.nonce,
-            gas_price: self.gas_price,
-            gas: self.gas,
+            nonce: Some(self.nonce),
+            gas_price: Some(self.gas_price),
+            gas: Some(self.gas),
             to: self.to,
             value: self.value,
             input: self.input,
             kettle_address: self.kettle_address,
-            chain_id: self.chain_id,
+            chain_id: Some(self.chain_id),
             confidential_inputs_hash: Some(self.confidential_inputs_hash),
             signature: Some(sig),
+            from: None, // todo: retrieve from signature and prehash
         }
     }
 
@@ -188,10 +193,10 @@ mod tests {
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), kettle_address)?;
         assert_eq!(cc_record.kettle_address, kettle_address);
         assert_eq!(cc_record.to, to_add);
-        assert_eq!(Some(cc_record.gas), tx.gas);
-        assert_eq!(cc_record.gas_price, tx.gas_price.unwrap());
-        assert_eq!(cc_record.chain_id, chain_id);
-        assert_eq!(cc_record.nonce, tx.nonce.unwrap());
+        assert_eq!(cc_record.gas, tx.gas);
+        assert_eq!(cc_record.gas_price, tx.gas_price);
+        assert_eq!(cc_record.chain_id, Some(chain_id));
+        assert_eq!(cc_record.nonce, tx.nonce);
         assert_eq!(cc_record.input, tx.input.input.unwrap());
         assert_eq!(cc_record.value, tx.value.unwrap());
         assert!(cc_record.confidential_inputs_hash.is_none());
@@ -211,10 +216,10 @@ mod tests {
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), kettle_address)?;
         assert_eq!(cc_record.kettle_address, kettle_address);
         assert_eq!(cc_record.to, Address::ZERO);
-        assert_eq!(Some(cc_record.gas), tx.gas);
-        assert_eq!(cc_record.gas_price, 0);
-        assert_eq!(cc_record.chain_id, chain_id);
-        assert_eq!(cc_record.nonce, 0);
+        assert_eq!(cc_record.gas, tx.gas);
+        assert_eq!(cc_record.gas_price, None);
+        assert_eq!(cc_record.chain_id, Some(chain_id));
+        assert_eq!(cc_record.nonce, None);
         assert_eq!(cc_record.input, Bytes::new());
         assert_eq!(cc_record.value, U256::ZERO);
         assert!(cc_record.confidential_inputs_hash.is_none());
