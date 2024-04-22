@@ -29,7 +29,8 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features =
     "signer-wallet",
     "consensus",
     "eips",
-    "serde"
+    "serde",
+    "signer-wallet",
 ] }
 alloy-rlp = { version = "0.3.4", features = ["derive"] }
 async-trait = "0.1.79"
