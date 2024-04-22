@@ -1,13 +1,15 @@
 use reqwest::Client as ReqwestClient;
+use std::sync::{Arc, OnceLock};
 use std::str::FromStr;
 use alloy::{
+    transports::{http::Http, Transport, TransportResult},
     providers::{
-        Provider, ProviderBuilder, RootProvider,
-        fillers::{FillProvider, TxFiller}, 
+        fillers::{FillProvider, FillerControlFlow, TxFiller}, 
+        Provider, ProviderBuilder, RootProvider, SendableTx,
     },
-    transports::{http::Http, TransportResult, Transport},
-    rpc::client::ClientRef,
-    primitives::Address,
+    rpc::client::ClientRef, 
+    primitives::Address, 
+    network::Network, 
 };
 use super::network::SuaveNetwork;
 
@@ -84,6 +86,66 @@ impl<S, T> SuaveFillProviderExt for FillProvider<S, SuaveProvider<T>, T, SuaveNe
     async fn kettle_address(&self) -> TransportResult<Address> {
         kettle_address(self.client()).await
     }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct KettleFiller(Arc<OnceLock<Address>>);
+
+impl KettleFiller {
+
+    pub fn new(kettle_address: Option<Address>) -> Self {
+        let lock = OnceLock::new();
+        if let Some(kettle_address) = kettle_address {
+            lock.set(kettle_address).expect("brand new");
+        }
+        Self(Arc::new(lock))
+    }
+
+}
+
+impl TxFiller<SuaveNetwork> for KettleFiller {
+    type Fillable = Address;
+
+    fn status(&self, tx: &<SuaveNetwork as Network>::TransactionRequest) -> FillerControlFlow {
+        if tx.kettle_address().is_some() {
+            FillerControlFlow::Finished
+        } else {
+            FillerControlFlow::Ready
+        }
+    }
+
+    async fn prepare<P, T>(
+        &self,
+        provider: &P,
+        _tx: &<SuaveNetwork as Network>::TransactionRequest,
+    ) -> TransportResult<Self::Fillable>
+    where
+        P: Provider<T, SuaveNetwork>,
+        T: Transport + Clone,
+    {
+        match self.0.get().cloned() {
+            Some(kettle) => Ok(kettle),
+            None => {
+                let kettle = kettle_address(&provider.client()).await?;
+                let kettle = *self.0.get_or_init(|| kettle);
+                Ok(kettle)
+            }
+        }
+    }
+
+    async fn fill(
+        &self,
+        fillable: Self::Fillable,
+        mut tx: SendableTx<SuaveNetwork>,
+    ) -> TransportResult<SendableTx<SuaveNetwork>> {
+        if let Some(builder) = tx.as_mut_builder() {
+            if builder.kettle_address().is_none() {
+                builder.set_kettle_address(fillable)
+            }
+        };
+        Ok(tx)
+    }
+
 }
 
 async fn kettle_address<'a, T>(client: ClientRef<'a , T>) -> TransportResult<Address> 

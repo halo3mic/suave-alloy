@@ -59,15 +59,15 @@ impl SuaveSigner {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl NetworkSigner<SuaveNetwork> for SuaveSigner {
 
-    fn default_signer(&self) -> Address {
+    fn default_signer_address(&self) -> Address {
         self.default_signer
     }
 
-    fn is_signer_for(&self,address: &Address) -> bool {
+    fn has_signer_for(&self,address: &Address) -> bool {
         self.signers.contains_key(address)
     }
 
-    fn signers(&self) -> impl Iterator<Item = Address> {
+    fn signer_addresses(&self) -> impl Iterator<Item = Address> {
         self.signers.keys().cloned()
     }
 
