@@ -3,10 +3,12 @@
 
 > Library for interfacing with SUAVE in Rust.
 
-### Run Example
+### Run Examples
 ```
 cargo run --example submit_ccr
 ```
 
-
+```
+cargo run --example callbuilder_ccr
+```
 
