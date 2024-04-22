@@ -29,7 +29,7 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features =
     "signer-wallet",
     "consensus",
     "eips",
-    "serde",
+    "serde"
 ] }
 alloy-rlp = { version = "0.3.4", features = ["derive"] }
 async-trait = "0.1.79"
@@ -37,3 +37,19 @@ eyre = "0.6.12"
 serde = { version = "1.0.197", features = ["serde_derive", "derive"] }
 serde_json = "1.0.115"
 tokio = { version = "1.37.0", features = ["full"] }
+
+[patch."https://github.com/alloy-rs/alloy"]
+alloy = { git = "https://github.com/halo3mic/alloy", branch = "sendabletx_exposed", features = [
+    "contract",
+    "network",
+    "providers",
+    "provider-http",
+    "rpc-client",
+    "rpc-types-eth",
+    "rpc-types-trace",
+    "signers",
+    "signer-wallet",
+    "consensus",
+    "eips",
+    "serde"
+] }

@@ -9,6 +9,7 @@ license.workspace = true
 [dependencies]
 suave-alloy-types = { workspace = true, default-features = false }
 
+<<<<<<< Updated upstream
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
     "network",
     "providers",
@@ -18,6 +19,9 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features =
     "signers",
     "contract",
 ] }
+=======
+alloy.workspace = true
+>>>>>>> Stashed changes
 
 reqwest = "0.12.3"
 url = "2.2.2"

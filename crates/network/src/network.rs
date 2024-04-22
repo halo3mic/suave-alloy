@@ -2,8 +2,8 @@ use suave_alloy_types::{ConfidentialComputeRequest, ConfidentialCallResponse};
 use alloy::{
     network::{ BuildResult, Network, NetworkSigner, TransactionBuilder, TransactionBuilderError }, 
     rpc::types::eth::{Header as EthHeader, TransactionReceipt},
-    primitives::{Address, Bytes, ChainId, TxKind, B256, U256}, 
-    consensus::{self, SignableTransaction, TxEnvelope}, 
+    primitives::{Address, Bytes, ChainId, TxKind, U256}, 
+    consensus::{self, TxEnvelope}, 
     eips::eip2930::AccessList,
     eips::eip2718::Eip2718Error,
 };
@@ -218,10 +218,8 @@ impl TransactionBuilder<SuaveNetwork> for ConfidentialComputeRequest {
     }
 
     fn can_build(&self) -> bool {
-        // todo: this check goes into crecord
         self.confidential_compute_record.nonce.is_some() && 
         self.confidential_compute_record.gas.is_some() &&
-        // self.confidential_compute_record.from.is_some() &&
         self.confidential_compute_record.chain_id.is_some()
     }
 

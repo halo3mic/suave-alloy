@@ -56,7 +56,7 @@ mod tests {
         assert_eq!(response_cc.request_record.gas_price, Some(0x8c9aca00));
         assert_eq!(response_cc.request_record.nonce, Some(0x45));
         assert_eq!(response_cc.request_record.input, Bytes::from_str("0x50723553000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000074554485553445400").unwrap());
-        assert_eq!(response_cc.request_record.kettle_address, Address::from_str("0x03493869959c866713c33669ca118e774a30a0e5").unwrap());
+        assert_eq!(response_cc.request_record.kettle_address, Address::from_str("0x03493869959c866713c33669ca118e774a30a0e5").ok());
         assert_eq!(response_cc.request_record.to, Address::from_str("0xc803334c79650708daf3a3462ac4b48296b1352a").unwrap());
         assert_eq!(response_cc.request_record.confidential_inputs_hash, Some(FixedBytes::from_str("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470").unwrap()));
         

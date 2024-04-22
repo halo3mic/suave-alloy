@@ -24,7 +24,7 @@ pub struct ConfidentialComputeRecord {
     pub gas_price: Option<u128>,
     pub value: U256,
     pub input: Bytes,
-    pub kettle_address: Address,
+    pub kettle_address: Option<Address>,
     #[serde(with = "alloy_serde::num::u64_hex_opt")]
     pub chain_id: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,7 +48,7 @@ impl ConfidentialComputeRecord {
             value: tx_req.value.unwrap_or(U256::ZERO),
             to: tx_req.to.unwrap_or(Address::ZERO),
             nonce: tx_req.nonce,
-            kettle_address,
+            kettle_address: Some(kettle_address),
             chain_id: tx_req.chain_id,
             gas: tx_req.gas,
             confidential_inputs_hash: None,
@@ -127,7 +127,7 @@ impl TryFrom<&ConfidentialComputeRecord> for CRecordRLP {
             to: ccr.to,
             value: ccr.value,
             input: ccr.input.clone(),
-            kettle_address: ccr.kettle_address,
+            kettle_address: ccr.kettle_address.ok_or_else(|| eyre!("Missing kettle address field"))?,
             confidential_inputs_hash: cinputs_hash,
             chain_id: ccr.chain_id.ok_or_else(|| eyre!("Missing chain id field"))?,
             v, r, s
@@ -146,7 +146,7 @@ impl Into<ConfidentialComputeRecord> for CRecordRLP {
             to: self.to,
             value: self.value,
             input: self.input,
-            kettle_address: self.kettle_address,
+            kettle_address: Some(self.kettle_address),
             chain_id: Some(self.chain_id),
             confidential_inputs_hash: Some(self.confidential_inputs_hash),
             signature: Some(sig),
@@ -191,7 +191,7 @@ mod tests {
             .with_value(U256::from(0x2233));
         
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), kettle_address)?;
-        assert_eq!(cc_record.kettle_address, kettle_address);
+        assert_eq!(cc_record.kettle_address, Some(kettle_address));
         assert_eq!(cc_record.to, to_add);
         assert_eq!(cc_record.gas, tx.gas);
         assert_eq!(cc_record.gas_price, tx.gas_price);
@@ -214,7 +214,7 @@ mod tests {
             .with_chain_id(chain_id);
         
         let cc_record = ConfidentialComputeRecord::from_tx_request(tx.clone(), kettle_address)?;
-        assert_eq!(cc_record.kettle_address, kettle_address);
+        assert_eq!(cc_record.kettle_address, Some(kettle_address));
         assert_eq!(cc_record.to, Address::ZERO);
         assert_eq!(cc_record.gas, tx.gas);
         assert_eq!(cc_record.gas_price, None);

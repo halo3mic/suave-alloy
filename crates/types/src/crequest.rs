@@ -41,7 +41,7 @@ impl ConfidentialComputeRequest {
         Ok(rlp_encoded)
     }
 
-    pub fn kettle_address(&self) -> Address {
+    pub fn kettle_address(&self) -> Option<Address> {
         self.confidential_compute_record.kettle_address
     }
 
@@ -51,7 +51,7 @@ impl ConfidentialComputeRequest {
     }
 
     pub fn set_kettle_address(&mut self, kettle_address: Address) {
-        self.confidential_compute_record.kettle_address = kettle_address;
+        self.confidential_compute_record.kettle_address = Some(kettle_address);
     }
 
     pub fn with_confidential_inputs(mut self, confidential_inputs: Bytes) -> Self {
@@ -236,7 +236,7 @@ impl TryFrom<&ConfidentialComputeRequest> for CRequestHashParams {
             .confidential_inputs_hash
             .unwrap_or(EMPTY_BYTES_HASH);
         Ok(Self {
-            kettle_address: ccr.confidential_compute_record.kettle_address,
+            kettle_address: ccr.confidential_compute_record.kettle_address.ok_or_else(|| eyre!("Missing kettle address field"))?,
             confidential_inputs_hash: cinputs_hash,
             nonce: ccr.confidential_compute_record.nonce.ok_or_else(|| eyre!("Missing nonce field"))?,
             gas_price: ccr.confidential_compute_record.gas_price.ok_or_else(|| eyre!("Missing gas price field"))?,
@@ -336,7 +336,7 @@ mod tests {
         let cinputs_hash = primitives::keccak256(&cinputs);
 
         let crecord = ConfidentialComputeRecord {
-            kettle_address: kettle_address,
+            kettle_address: Some(kettle_address),
             confidential_inputs_hash: Some(cinputs_hash),
             nonce: Some(0x18),
             gas_price: Some(0x3b9aca00),

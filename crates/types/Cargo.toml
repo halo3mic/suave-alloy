@@ -7,6 +7,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+<<<<<<< Updated upstream
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
     "network",
     "rpc-types-eth",
@@ -15,6 +16,9 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features =
     "eips",
     "serde",
 ] }
+=======
+alloy.workspace = true
+>>>>>>> Stashed changes
 alloy-rlp.workspace = true
 async-trait.workspace = true
 serde.workspace = true

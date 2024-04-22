@@ -9,6 +9,7 @@ license.workspace = true
 [dependencies]
 suave-alloy = { path = "../crates/suave-alloy" }
 
+<<<<<<< Updated upstream
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features = [
     "providers",
     "rpc-types-trace",
@@ -23,6 +24,9 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "e7542d7", features =
     "eips",
     "serde",
 ] }
+=======
+alloy.workspace = true
+>>>>>>> Stashed changes
 tokio.workspace = true
 eyre.workspace = true
 
