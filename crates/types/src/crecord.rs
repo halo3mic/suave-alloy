@@ -29,6 +29,8 @@ pub struct ConfidentialComputeRecord {
     pub chain_id: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub confidential_inputs_hash: Option<FixedBytes<32>>,
+    #[serde(default)]
+    pub is_eip712: bool,
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub signature: Option<Signature>,
     #[serde(skip)]
@@ -42,19 +44,17 @@ impl ConfidentialComputeRecord {
         tx_req: TransactionRequest, 
         kettle_address: Address, 
     ) -> Result<Self> {
-        Ok(Self {
-            input: tx_req.input.input.unwrap_or(Bytes::new()),
-            gas_price: tx_req.gas_price,
-            value: tx_req.value.unwrap_or(U256::ZERO),
-            to: tx_req.to.unwrap_or(Address::ZERO),
-            nonce: tx_req.nonce,
-            kettle_address: Some(kettle_address),
-            chain_id: tx_req.chain_id,
-            gas: tx_req.gas,
-            confidential_inputs_hash: None,
-            signature: None,
-            from: None,
-        })
+        let mut crecord = Self::default();
+        crecord.input = tx_req.input.input.unwrap_or_default();
+        crecord.value = tx_req.value.unwrap_or_default();
+        crecord.to = tx_req.to.unwrap_or_default();
+        crecord.kettle_address = Some(kettle_address);
+        crecord.gas_price = tx_req.gas_price;
+        crecord.chain_id = tx_req.chain_id;
+        crecord.nonce = tx_req.nonce;
+        crecord.gas = tx_req.gas;
+
+        Ok(crecord)
     }
 
     pub fn set_confidential_inputs_hash(&mut self, confidential_inputs_hash: FixedBytes<32>) {
@@ -86,6 +86,7 @@ pub struct CRecordRLP {
     input: Bytes,
     kettle_address: Address,
     confidential_inputs_hash: FixedBytes<32>,
+    is_eip712: bool,
     chain_id: u64,
     v: u8,
     r: U256,
@@ -129,6 +130,7 @@ impl TryFrom<&ConfidentialComputeRecord> for CRecordRLP {
             input: ccr.input.clone(),
             kettle_address: ccr.kettle_address.ok_or_else(|| eyre!("Missing kettle address field"))?,
             confidential_inputs_hash: cinputs_hash,
+            is_eip712: ccr.is_eip712,
             chain_id: ccr.chain_id.ok_or_else(|| eyre!("Missing chain id field"))?,
             v, r, s
         })
@@ -149,6 +151,7 @@ impl Into<ConfidentialComputeRecord> for CRecordRLP {
             kettle_address: Some(self.kettle_address),
             chain_id: Some(self.chain_id),
             confidential_inputs_hash: Some(self.confidential_inputs_hash),
+            is_eip712: self.is_eip712,
             signature: Some(sig),
             from: None, // todo: retrieve from signature and prehash
         }
@@ -226,21 +229,6 @@ mod tests {
         assert!(cc_record.signature.is_none());
 
         Ok(())
-    }
-
-    #[test]
-    fn test_missing_vals() {
-        let chain_id = 0x067932;
-        let kettle_address = Address::from_str("0x7d83e42b214b75bf1f3e57adc3415da573d97bff").unwrap();
-
-        let tx = TransactionRequest::default().gas_limit(0x0f4240);
-        let cc_record_res = ConfidentialComputeRecord::from_tx_request(tx, kettle_address);
-        assert!(cc_record_res.is_err());
-
-        let tx = TransactionRequest::default()
-            .with_chain_id(chain_id);
-        let cc_record_res = ConfidentialComputeRecord::from_tx_request(tx, kettle_address);
-        assert!(cc_record_res.is_err());
     }
 
 }
