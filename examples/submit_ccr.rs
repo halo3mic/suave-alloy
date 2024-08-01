@@ -14,12 +14,12 @@ use suave_alloy::prelude::*;
 async fn main() -> Result<()> {
     // Args
     let input = Bytes::from_str("0x50723553000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000074554485553445400").unwrap();
-    let to_add = Address::from_str("0xc803334c79650708Daf3a3462AC4B48296b1352a").unwrap();
+    let to_add = Address::from_str("0xa2a2E84e6F126332b4F619D850Ebc269c0239438").unwrap();
     let cinputs = Bytes::new();
     let gas = 0x0f4240; // Estimate gas doesn't work well with MEVM
 
     // Create SUAVE signer-provider
-    let rpc_url = "https://rpc.rigil.suave.flashbots.net";
+    let rpc_url = "https://rpc.toliman.suave.flashbots.net";
     let wallet: LocalWallet = "0x1111111111111111111111111111111111111111111111111111111111111111".parse()?; 
     let provider = ProviderBuilder::<_, _, SuaveNetwork>::default()
         .with_recommended_fillers()

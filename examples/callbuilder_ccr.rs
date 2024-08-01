@@ -19,9 +19,9 @@ async fn main() -> Result<()> {
             function queryLatestPrice(string memory ticker) public view returns (uint price);
         }
     }
-    let boracle_add = Address::from_str("0xc803334c79650708Daf3a3462AC4B48296b1352a")?;
+    let boracle_add = Address::from_str("0xa2a2E84e6F126332b4F619D850Ebc269c0239438")?;
     let pk = "0x1111111111111111111111111111111111111111111111111111111111111111";
-    let rpc_url = "https://rpc.rigil.suave.flashbots.net";
+    let rpc_url = "https://rpc.toliman.suave.flashbots.net";
     let ticker = String::from("ETHUSDT");
     let gas = 0x0f4240; // Estimate gas doesn't work well with MEVM
 
